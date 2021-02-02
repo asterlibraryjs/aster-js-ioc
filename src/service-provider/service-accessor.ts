@@ -17,12 +17,6 @@ export class ServiceAccessor extends Disposable implements IServiceAccessor {
         this._proxies = new Map();
     }
 
-    has(serviceId: ServiceIdentifier): boolean {
-        this.checkIfDisposed();
-
-        return this._serviceProvider.has(serviceId);
-    }
-
     get<T>(serviceId: ServiceIdentifier<T>, required: true): T;
     get<T>(serviceId: ServiceIdentifier<T>, required?: boolean): T | undefined;
     get<T>(serviceId: ServiceIdentifier<T>, required?: boolean): any {

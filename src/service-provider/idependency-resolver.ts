@@ -1,10 +1,10 @@
-import { DependencyParameter, ServiceIdentifier } from "../service-registry";
+import { ServiceIdentifier } from "../service-registry";
 
-import "./service-provider-factory";
 import { IServiceDependency, ServiceEntry } from "./service-entry";
 import { TopologicalGraph } from "@aster-js/iterators";
 import { Constructor } from "@aster-js/core";
 import { IServiceProvider } from "./iservice-provider";
+import { IServiceDescriptor } from "../service-descriptors";
 
 export const IDependencyResolver = ServiceIdentifier<IDependencyResolver>("IDependencyResolver");
 
@@ -14,7 +14,7 @@ export const IDependencyResolver = ServiceIdentifier<IDependencyResolver>("IDepe
 export interface IDependencyResolver {
     resolveProviders(serviceId: ServiceIdentifier): Iterable<IServiceProvider>;
 
-    resolveEntry(serviceId: ServiceIdentifier): ServiceEntry | undefined;
+    resolveEntry(descriptorOrId: ServiceIdentifier | IServiceDescriptor): ServiceEntry | undefined;
 
     resolveEntries(serviceId: ServiceIdentifier): Iterable<ServiceEntry>;
 

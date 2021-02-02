@@ -1,12 +1,10 @@
 import { Constructor } from "@aster-js/core";
 import { TopologicalGraph, Iterables } from "@aster-js/iterators";
 
-import { DependencyParameter, ServiceContract, ServiceIdentifier, ServiceRegistry } from "../service-registry";
-import { IServiceCollection, } from "../service-collection";
+import { ServiceContract, ServiceIdentifier, ServiceIdentityTag, ServiceRegistry } from "../service-registry";
 import { IServiceDescriptor, ServiceScope } from "../service-descriptors";
 
 import { IServiceProvider, } from "./iservice-provider";
-import "./service-provider-factory";
 import { IDependencyResolver } from "./idependency-resolver";
 import { IServiceDependency, ServiceEntry } from "./service-entry";
 import { MultipleServiceDependency, EmptyServiceDependency, SingleServiceDependency } from "./dependency-entry";
@@ -15,29 +13,34 @@ import { MultipleServiceDependency, EmptyServiceDependency, SingleServiceDepende
 export class DependencyResolver implements IDependencyResolver {
 
     constructor(
-        private readonly _services: IServiceCollection,
-        private readonly _parent: DependencyResolver | undefined,
-        @IServiceProvider private readonly _serviceProvider: IServiceProvider
+        private readonly _serviceProvider: IServiceProvider
     ) { }
 
     *resolveProviders(serviceId: ServiceIdentifier): Iterable<IServiceProvider> {
-        for (const svc of Iterables.create(this, () => this._parent)) {
-            if (svc._services.has(serviceId)) {
-                yield svc._serviceProvider;
+        for (const svc of Iterables.create(this._serviceProvider, prev => prev.parent())) {
+            const descriptors = svc.getScopeDescriptors(serviceId);
+            if (Iterables.has(descriptors)) {
+                yield svc;
             }
         }
     }
 
-    resolveEntry(serviceId: ServiceIdentifier): ServiceEntry | undefined {
-        const all = this.resolveEntries(serviceId);
-        return Iterables.first(all);
+    resolveEntry(descriptorOrId: ServiceIdentifier | IServiceDescriptor): ServiceEntry | undefined {
+        if (ServiceIdentityTag.has(descriptorOrId)) {
+            const all = this.resolveEntries(<ServiceIdentifier>descriptorOrId);
+            return Iterables.first(all);
+        }
+        else {
+            const all = this.resolveEntries((<IServiceDescriptor>descriptorOrId).serviceId);
+            return Iterables.first(all, entry => entry.desc === descriptorOrId);
+        }
     }
 
     *resolveEntries(serviceId: ServiceIdentifier): Iterable<ServiceEntry> {
-        for (const svc of Iterables.create(this, () => this._parent)) {
-            for (const desc of svc._services.get(serviceId)) {
-                if (svc === this || desc.scope !== ServiceScope.scoped) {
-                    yield ServiceEntry.create(svc._serviceProvider, desc);
+        for (const svc of Iterables.create(this._serviceProvider, prev => prev.parent())) {
+            for (const desc of svc.getScopeDescriptors(serviceId)) {
+                if (svc === this._serviceProvider || desc.scope !== ServiceScope.scoped) {
+                    yield ServiceEntry.create(desc, svc);
                 }
             }
         }
@@ -79,13 +82,12 @@ export class DependencyResolver implements IDependencyResolver {
 
             const dependencies = [...dependencyResolver.resolveDependencies(entry.desc.ctor)];
 
-            const serviceEntries = dependencies.flatMap(dep => [...dep.getDependencyEntries()])
+            const serviceEntries = dependencies.flatMap(dep => [...dep.entries()])
                 .filter(e => {
                     return !e.provider.getScopeInstance(e.desc) && !graph.has(e)
                 });
 
-            entry.setDependencies(dependencies);
-            graph.add(entry, ...serviceEntries);
+            graph.add({ ...entry, dependencies }, ...serviceEntries);
             stack.push(...serviceEntries);
         }
         while (stack.length);

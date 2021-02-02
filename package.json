@@ -26,7 +26,7 @@
   "license": "ISC",
   "dependencies": {
     "tslib": "^1.11.1",
-    "@aster-js/core": "^1.0.3",
+    "@aster-js/core": "^1.0.6",
     "@aster-js/async": "^1.0.0",
     "@aster-js/decorators": "^1.0.0",
     "@aster-js/collections": "^1.0.1",
@@ -38,6 +38,7 @@
     "@rollup/plugin-alias": "^3.1.1",
     "@rollup/plugin-multi-entry": "^3.0.1",
     "@rollup/plugin-node-resolve": "^8.0.1",
+    "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-copy": "^3.3.0",
     "@types/chai": "4.1.7",
     "@types/mocha": "5.2.5",

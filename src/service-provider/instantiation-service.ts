@@ -1,19 +1,14 @@
-import { IDisposable, Constructor, Lazy, Tag, asserts } from "@aster-js/core";
+import { IDisposable, Lazy, asserts } from "@aster-js/core";
 
-import { ServiceIdentifier, ServiceRegistry, IServiceFactory, ServiceContract, DependencyParameter } from "../service-registry";
-import { IServiceDescriptor, ServiceScope, ServiceFactoryDescriptor } from "../service-descriptors";
+import { IServiceFactory, ServiceContract } from "../service-registry";
+import { IServiceDescriptor, ServiceFactoryDescriptor } from "../service-descriptors";
 
-import { IServiceProvider, } from "./iservice-provider";
-import "./service-provider-factory";
 import { IDependencyResolver } from "./idependency-resolver";
 import { EventEmitter, IEvent } from "@aster-js/events";
 import { IInstantiationService } from "./iinstantiation-service";
 import { InstanciationContext } from "./instanciation-context";
 import { ServiceEntry } from "./service-entry";
 
-/**
- * Provides methods to retrieve services and resolving dependencies
- */
 @ServiceContract(IInstantiationService)
 export class InstantiationService implements IInstantiationService {
     private readonly _onDidServiceInstantiated: EventEmitter<[desc: IServiceDescriptor, instance: any]> = new EventEmitter();
@@ -24,9 +19,12 @@ export class InstantiationService implements IInstantiationService {
         @IDependencyResolver private readonly _dependencyResolver: IDependencyResolver
     ) { }
 
-    createService(entry: ServiceEntry): any {
-        const ctx = this.instanciateDependencyGraph(entry);
-        return ctx.getInstance(entry);
+    createService(desc: IServiceDescriptor): any {
+        const entry = this._dependencyResolver.resolveEntry(desc);
+        if (entry) {
+            const ctx = this.instanciateDependencyGraph(entry);
+            return ctx.getInstance(entry);
+        }
     }
 
     instanciateService(entry: ServiceEntry, ctx: InstanciationContext): void {
@@ -67,7 +65,7 @@ export class InstantiationService implements IInstantiationService {
     private instanciateServiceCore(entry: ServiceEntry, ctx: InstanciationContext): void {
         asserts.defined(entry.dependencies);
 
-        const dependencies = entry.dependencies.map(dep => dep.getDependencyArg(ctx));
+        const dependencies = entry.dependencies.map(dep => dep.resolveArg(ctx));
         let instance = new entry.desc.ctor(...entry.desc.baseArgs, ...dependencies);
 
         if (entry.desc instanceof ServiceFactoryDescriptor) {

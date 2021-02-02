@@ -1,7 +1,7 @@
 import { Delayed } from "@aster-js/async";
 
-import { IServiceStore } from "../service-collection";
-import {  IServiceProvider } from "../service-provider";
+import { ServiceCollection } from "../service-collection";
+import {  IServiceProvider, ServiceProvider } from "../service-provider";
 
 import { IIoCModule } from "./iioc-module";
 import { IoCModuleSetupDelegate } from "./iioc-module-builder";
@@ -23,7 +23,7 @@ export class IoCModuleBuilder extends IoCModuleBuilderBase {
         return result;
     }
 
-    protected createServiceProvider(store: IServiceStore): IServiceProvider {
-        return this._parent.services.createChild(name, store);
+    protected createServiceProvider(services: ServiceCollection): IServiceProvider {
+        return new ServiceProvider(services, this._parent.services);
     }
 }

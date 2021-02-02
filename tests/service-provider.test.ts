@@ -1,8 +1,6 @@
 import { assert } from "chai";
 import { assert as sassert, spy } from "sinon";
-import { ServiceIdentifier, IServiceProvider, Optional, ServiceContract } from "@aster-js/ioc";
-import { asserts } from "../../core";
-import { IoCKernel } from "../src/ioc-module/ioc-kernel";
+import { ServiceIdentifier, IServiceProvider, Optional, ServiceContract, IoCKernel } from "../src";
 
 const ICustomService = ServiceIdentifier<ICustomService>("ICustomService");
 interface ICustomService {
@@ -76,8 +74,8 @@ describe("ServiceCollection", () => {
 
         const result = services.createInstance(Bob);
 
-        asserts.defined(result.svc);
-        asserts.instanceOf(result.svc, CustomService);
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, CustomService);
     });
 
     it("Should inject properly bound service using service contract", () => {
@@ -91,8 +89,8 @@ describe("ServiceCollection", () => {
 
         const result = services.createInstance(Bob);
 
-        asserts.defined(result.svc);
-        asserts.instanceOf(result.svc, CustomService);
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, CustomService);
     });
 
     it("Should throw an error when not enough arguments", () => {
@@ -128,7 +126,7 @@ describe("ServiceCollection", () => {
 
         const result = services.createInstance(Bob);
 
-        asserts.notDefined(result.svc);
+        assert.isUndefined(result.svc);
     });
 
     it("Should bound optional service", () => {
@@ -142,8 +140,8 @@ describe("ServiceCollection", () => {
 
         const result = services.createInstance(Bob);
 
-        asserts.defined(result.svc);
-        asserts.instanceOf(result.svc, CustomService);
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, CustomService);
     });
 
     it("Should bind properly a factory", () => {
@@ -161,8 +159,8 @@ describe("ServiceCollection", () => {
         const result = services.get(ICustomService);
 
         sassert.calledOnce(createInstanceSpy);
-        asserts.instanceOf(result, CustomService);
-        assert.equal(result.hello(), "no");
+        assert.instanceOf(result, CustomService);
+        assert.equal(result!.hello(), "no");
     });
 
     it("Should create a child module", () => {
@@ -178,7 +176,7 @@ describe("ServiceCollection", () => {
 
         const result = childScope.services.createInstance(Bob);
 
-        asserts.defined(result.svc);
-        asserts.instanceOf(result.svc, CustomService);
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, CustomService);
     });
 });
