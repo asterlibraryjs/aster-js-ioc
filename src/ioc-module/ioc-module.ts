@@ -2,9 +2,9 @@ import { IServiceProvider } from "../service-provider";
 
 import { IIoCModule } from "./iioc-module";
 import { IoCModuleSetupDelegate } from "./iioc-module-builder";
-import { IoCModuleBase } from "./ioc-module-base";
+import { IoCContainer } from "./ioc-container";
 
-export class IoCModule extends IoCModuleBase {
+export class IoCModule extends IoCContainer {
 
     get parent(): IIoCModule { return this._parent; }
 

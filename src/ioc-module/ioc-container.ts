@@ -7,7 +7,7 @@ import { IIoCModule } from "./iioc-module";
 import { IIoCContainerBuilder, IoCModuleSetupDelegate } from "./iioc-module-builder";
 import { IoCModuleBuilder } from "./ioc-module-builder";
 
-export class IoCModuleBase extends Disposable implements IIoCModule {
+export class IoCContainer extends Disposable implements IIoCModule {
     private readonly _setupCallbacks: IoCModuleSetupDelegate[];
     private readonly _children: Map<string, Delayed<IIoCModule>>;
     private readonly _ready: Deferred;

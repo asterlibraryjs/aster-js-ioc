@@ -6,9 +6,9 @@ import {  IServiceProvider, ServiceProvider } from "../service-provider";
 import { IIoCModule } from "./iioc-module";
 import { IoCModuleSetupDelegate } from "./iioc-module-builder";
 import { IoCModule } from "./ioc-module";
-import { IoCModuleBuilderBase } from "./ioc-module-builder-base";
+import { IoCContainerBuilder } from "./ioc-container-builder";
 
-export class IoCModuleBuilder extends IoCModuleBuilderBase {
+export class IoCModuleBuilder extends IoCContainerBuilder {
 
     constructor(
         private readonly _result: Delayed<IIoCModule>,
