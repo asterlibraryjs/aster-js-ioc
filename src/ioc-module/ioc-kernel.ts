@@ -1,7 +1,7 @@
 import { IoCKernelBuilder } from "./ioc-kernel-builder";
-import { IoCModuleBase } from "./ioc-module-base";
+import { IoCContainer } from "./ioc-container";
 
-export class IoCKernel extends IoCModuleBase {
+export class IoCKernel extends IoCContainer {
 
     static create(): IoCKernelBuilder {
         return new IoCKernelBuilder();

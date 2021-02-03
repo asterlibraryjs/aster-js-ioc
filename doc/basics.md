@@ -1,6 +1,6 @@
 ## IoC Module
 
-This is very small module that will help you to implement a proper Inversion of Control accros your service ecosystem.
+This is very small module that will help you to implement a proper Inversion of Control accross your service ecosystem.
 
 Let see how difficult it is...
 
@@ -10,7 +10,7 @@ First of all, you need services, let see how to declare a service:
 
 #### Step 1: Declaring the service identifier and its contract:
 
-Make use of namespace merge and make the Service Identifier having the same name.
+Make use of namespace merge and make the Service Identifier and the interface having the same name.
 
 ```typescript
 export const IHttpService = ServiceIdentifier<IHttpService>("IHttpService");
@@ -22,7 +22,7 @@ export interface IHttpService {
 
 #### Step 2: Create your first implementation
 
-Once you have declared the service id, you now able to start implement this service:
+Once you have declared the service id, you are now able to start implement this service:
 
 ```typescript
 @ServiceContract(IHttpService)
@@ -34,7 +34,7 @@ export class HttpService implements IHttpService {
 }
 ```
 
-The `ServiceContract` decorator is optional, but it will be usefull later to reduce the binding declaration.
+The `ServiceContract` decorator is optional, but it will be usefull later to reduce the binding declaration enabling auto binding between interface and implementation.
 
 ### Step 3: Create your second service
 
@@ -86,5 +86,5 @@ kernel.start();
 And obviously, getting an address of a customer like that is a bit overkill.
 
 ## See Also
-- [Service Factory](./packages/ioc/factory.md)
-- [Service Provider](./packages/ioc/factory.md)
+- [Service Factory](./factory.md)
+- [Service Provider](./provider.md)

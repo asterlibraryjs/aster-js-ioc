@@ -8,7 +8,7 @@ import { IIoCContainerBuilder } from "./iioc-module-builder";
 import { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
 import { IIoCModule } from "./iioc-module";
 
-export abstract class IoCModuleBuilderBase extends Disposable implements IIoCContainerBuilder {
+export abstract class IoCContainerBuilder extends Disposable implements IIoCContainerBuilder {
     private readonly _services: ServiceCollection;
     private readonly _setups: IoCModuleSetupDelegate[] = [];
 

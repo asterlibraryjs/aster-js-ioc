@@ -4,7 +4,7 @@
 
 This project provides a standalone dependency injection / inversion of control library.
 
-It's compatible with an renderer and give your code a SOA architecture offering then decoupling, abstration, easy to unit test and modulary to your project.
+It's compatible with any renderer and enable to structure your code using SOA architecture offering then decoupling, abstration, easy to unit test and modulary to your project.
 
 ### Quick sample
 
