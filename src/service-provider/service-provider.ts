@@ -2,7 +2,7 @@ import { Constructor } from "@aster-js/core";
 import { Iterables } from "@aster-js/iterators";
 
 import { ServiceIdentifier, ServiceContract, ServiceIdentityTag } from "../service-registry";
-import { IServiceCollection, } from "../service-collection";
+import { IServiceCollection } from "../service-collection";
 import { IServiceDescriptor, ServiceDescriptor, ServiceScope } from "../service-descriptors";
 
 import { IServiceProvider, } from "./iservice-provider";
@@ -26,24 +26,24 @@ export class ServiceProvider implements IServiceProvider {
         this._dependencyResolver = this.createDependencyResolver();
         this._instanciationService = this.createInstanciationService();
         this._instanciationService.onDidServiceInstantiated(this.onDidServiceInstantiated, this);
+        
+        this.addCoreService(IDependencyResolver, this._dependencyResolver);
+        this.addCoreService(IInstantiationService, this._instanciationService);
+        this.addCoreService(IServiceProvider, this);
     }
 
     protected createDependencyResolver(): DependencyResolver {
-        const desc = new ServiceDescriptor(ServiceScope.scoped, IDependencyResolver, DependencyResolver, [], false);
-        this._services.add(desc);
-
-        const svc = new DependencyResolver(this);
-        this._instances.set(desc, svc);
-        return svc;
+        return new DependencyResolver(this);
     }
 
     protected createInstanciationService(): IInstantiationService {
-        const desc = new ServiceDescriptor(ServiceScope.scoped, IInstantiationService, InstantiationService, [], false);
-        this._services.add(desc);
+        return new InstantiationService(this._dependencyResolver);
+    }
 
-        const svc = new InstantiationService(this._dependencyResolver);
-        this._instances.set(desc, svc);
-        return svc;
+    protected addCoreService<T extends Object>(serviceId: ServiceIdentifier<T>, instance: T): void {
+        const desc = new ServiceDescriptor(ServiceScope.scoped, serviceId, instance.constructor as Constructor, [], false);
+        this._services.add(desc);
+        this._instances.set(desc, instance);
     }
 
     protected onDidServiceInstantiated({ detail }: EventArgs<[desc: IServiceDescriptor, instance: any]>) {

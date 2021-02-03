@@ -18,7 +18,6 @@ export class IoCKernelBuilder extends IoCModuleBuilderBase {
     }
 
     protected configureDefaultServices(services: ServiceCollection, provider: IServiceProvider): void {
-        super.configureDefaultServices(services, provider);
         services.addTransient(ServiceAccessor);
     }
 }

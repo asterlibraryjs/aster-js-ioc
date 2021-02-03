@@ -1,6 +1,6 @@
 import { IDisposable } from "@aster-js/core";
 
-import { ServiceIdentifier } from "../service-registry";
+import { ServiceIdentifier } from "../service-registry/service-identifier";
 
 export const IServiceAccessor = ServiceIdentifier<IServiceAccessor>("IServiceAccessor");
 

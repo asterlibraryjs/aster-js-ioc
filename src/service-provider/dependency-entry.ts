@@ -20,8 +20,9 @@ export class SingleServiceDependency implements IServiceDependency {
     ) { }
 
     resolveArg(ctx?: InstanciationContext): any {
-        if(ctx){
-            return ctx.getInstance(this._entry);
+        if (ctx) {
+            return ctx.getInstance(this._entry)
+                ?? this._entry.provider.getScopeInstance(this._entry.desc);
         }
         return this._entry.provider.get(this._entry.desc);
     }
@@ -45,9 +46,9 @@ export class MultipleServiceDependency implements IServiceDependency {
 
     resolveArg(ctx?: InstanciationContext): any {
         if (ctx) {
-            return this._entries.map(e => ctx.getInstance(e));
+            return this._entries.map(e => ctx.getInstance(e) ?? e.provider.getScopeInstance(e.desc));
         }
-        return this._entries.map(e => e.provider.get( e.desc));
+        return this._entries.map(e => e.provider.get(e.desc));
     }
 
     *entries(): Iterable<ServiceEntry> {

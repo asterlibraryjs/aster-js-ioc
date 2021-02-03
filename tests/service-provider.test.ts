@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { assert as sassert, spy } from "sinon";
-import { ServiceIdentifier, IServiceProvider, Optional, ServiceContract, IoCKernel } from "../src";
+import { ServiceIdentifier, IServiceProvider, Optional, ServiceContract, IoCKernel, IServiceFactory } from "../src";
 
 const ICustomService = ServiceIdentifier<ICustomService>("ICustomService");
 interface ICustomService {
@@ -13,26 +13,26 @@ class CustomService {
         return "no";
     }
 }
-export const IHttpService = ServiceIdentifier<IHttpService>("IHttpService");
+const IHttpService = ServiceIdentifier<IHttpService>("IHttpService");
 
-export interface IHttpService {
+interface IHttpService {
     get(url: string): Promise<string>;
 }
 @ServiceContract(IHttpService)
-export class HttpService implements IHttpService {
+class HttpService implements IHttpService {
     async get(url: string): Promise<string> {
         const res = await fetch(url);
         return await res.text()
     }
 }
-export const ICustomerService = ServiceIdentifier<ICustomerService>("ICustomerService");
+const ICustomerService = ServiceIdentifier<ICustomerService>("ICustomerService");
 
-export interface ICustomerService {
+interface ICustomerService {
     getAddress(customerId: string): Promise<string>;
 }
 
 @ServiceContract(ICustomerService)
-export class CustomerService {
+class CustomerService {
 
     constructor(
         @IHttpService private readonly _httpService: IHttpService
@@ -147,7 +147,7 @@ describe("ServiceCollection", () => {
     it("Should bind properly a factory", () => {
         const { services } = IoCKernel.create()
             .configure(services => services.addSingleton(
-                ICustomService.factory(acc => {
+                IServiceFactory.create(ICustomService, acc => {
                     const provider = acc.get(IServiceProvider, true);
                     return provider.createInstance(CustomService);
                 }, CustomService)

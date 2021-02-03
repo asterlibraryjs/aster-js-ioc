@@ -1,8 +1,5 @@
-import { asserts, Constructor, Tag } from "@aster-js/core";
+import { Constructor, Tag } from "@aster-js/core";
 
-import { IServiceAccessor } from "../service-provider";
-
-import { IServiceFactory, ServiceFactoryConstructor, ServiceFactoryDelegate } from "./service-factory";
 import { ServiceRegistry } from "./service-registry";
 
 const serviceIdentityTag = Tag<string | symbol>("IoC/ServiceId");
@@ -29,19 +26,6 @@ export interface ServiceIdentifierDecorator {
 }
 
 export interface ServiceIdentifierImpl<T> {
-    /**
-     * Create a factory that will return an existing instance
-     * @param instance Service instance
-     */
-    factory(instance: T): ServiceFactoryConstructor<T>;
-    /**
-     * Create a factory for current ServiceId
-     * @param callback Callback factory
-     * @param targetType (Recommanded) Expected type, this may help internal logic to provide more detail on the implementation before its creation
-     */
-    factory(callback: (acc: IServiceAccessor) => T, targetType?: Constructor<T>): ServiceFactoryConstructor<T>;
-    /** Returns a new child service identifier to enable groups */
-    createChild(): ServiceIdentifier<T>;
     /** Returns the registration name */
     toString(): string;
 }
@@ -63,22 +47,6 @@ export function ServiceIdentifier<T>(nameOrOptions: string | ServiceIdentifierOp
 
 function createImpl<T>(id: ServiceIdentifier, options: ServiceIdentifierOptions): ServiceIdentifierImpl<T> {
     return {
-        factory: (callbackOrInstance: T | ServiceFactoryDelegate<T>, targetType?: Constructor<T>) => {
-            if (typeof callbackOrInstance === "function") {
-                const callback = callbackOrInstance as ServiceFactoryDelegate<T>;
-                return IServiceFactory.create(id, callback, targetType);
-            }
-            const instance = callbackOrInstance as any;
-            return IServiceFactory.create(id, () => instance, instance.constructor);
-        },
-        createChild: () => {
-            const children = childrenIdentityTag.get(id);
-            asserts.ensure(children);
-
-            const childId = ServiceIdentifier<T>(options.name);
-            children.push(childId);
-            return childId;
-        },
         toString: () => options.name
     };
 }

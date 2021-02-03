@@ -70,11 +70,8 @@ export class DependencyResolver implements IDependencyResolver {
     resolveDependencyGraph(entry: ServiceEntry): TopologicalGraph<ServiceEntry> {
         const graph = new TopologicalGraph<ServiceEntry>(entry => entry.uid);
 
-        let count = 0;
         const stack: ServiceEntry[] = [entry];
         do {
-            if (count++ > 100) throw new Error(`Stackoverflow: Cyclic dependency between services.`);
-
             const entry = stack.pop()!;
 
             // Get the dependency resolver from the scope of the service
@@ -83,12 +80,10 @@ export class DependencyResolver implements IDependencyResolver {
             const dependencies = [...dependencyResolver.resolveDependencies(entry.desc.ctor)];
 
             const serviceEntries = dependencies.flatMap(dep => [...dep.entries()])
-                .filter(e => {
-                    return !e.provider.getScopeInstance(e.desc) && !graph.has(e)
-                });
+                .filter(e => !e.provider.getScopeInstance(e.desc));
 
             graph.add({ ...entry, dependencies }, ...serviceEntries);
-            stack.push(...serviceEntries);
+            stack.push(...serviceEntries.filter(e => !graph.has(e)));
         }
         while (stack.length);
 

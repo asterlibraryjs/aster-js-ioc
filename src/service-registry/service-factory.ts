@@ -1,6 +1,6 @@
 import { Constructor, Disposable, IDisposable, Tag } from "@aster-js/core";
 
-import { IServiceAccessor } from "../service-provider";
+import { IServiceAccessor } from "../service-provider/iservice-accessor";
 
 import { Optional, ServiceIdentifier } from "./service-identifier";
 
