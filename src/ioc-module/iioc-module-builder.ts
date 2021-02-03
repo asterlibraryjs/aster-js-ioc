@@ -2,7 +2,7 @@ import { IIoCModule } from "./iioc-module";
 import { IServiceAccessor } from "../service-provider/iservice-accessor";
 import { ServiceCollection } from "../service-collection";
 import { ServiceIdentifier } from "../service-registry";
-import { AbortToken } from "../../../async";
+import { AbortToken } from "@aster-js/async";
 
 export type ServiceSetupDelegate<T = any> = (svc: T) => any;
 
