@@ -1,4 +1,4 @@
-import { Tag } from "@aster-js/core";
+import { Tags } from "@aster-js/core";
 import { IServiceDescriptor } from "../service-descriptors";
 import { DependencyParameter } from "../service-registry";
 import { InstanciationContext } from "./instanciation-context";
@@ -25,10 +25,8 @@ export type ServiceEntry = {
 }
 
 export namespace ServiceEntry {
-    const entryHashCode = Tag.lazy("ServiceEntryHashCode", (state) => ++state.lastId, { lastId: 0 });
-
     export function create(desc: IServiceDescriptor, provider: IServiceProvider) {
-        const uid = `${entryHashCode.get(desc)}-${entryHashCode.get(provider)}`;
+        const uid = `${Tags.hashId(desc)}-${Tags.hashId(provider)}`;
         return { uid, desc, provider };
     }
 }

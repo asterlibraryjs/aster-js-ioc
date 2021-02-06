@@ -40,15 +40,26 @@ export class InstantiationService implements IInstantiationService {
     }
 
     private instanciateDependencyGraph(entry: ServiceEntry): InstanciationContext {
-        const graph = this._dependencyResolver.resolveDependencyGraph(entry);
-        const ctx = new InstanciationContext(graph);
+        const ctx = new InstanciationContext();
 
-        for (const entry of ctx.entries()) {
-            const instantiationSvc = entry.provider.get(IInstantiationService, true);
-            instantiationSvc.instanciateService(entry, ctx);
+        const graph = this._dependencyResolver.resolveDependencyGraph(entry);
+        for (const entry of graph.nodes()) {
+            if (entry.desc.delayed) {
+                this.instanciateDependency(entry, ctx);
+                graph.delete(entry);
+            }
+        }
+
+        for (const entry of graph) {
+            this.instanciateDependency(entry, ctx);
         }
 
         return ctx;
+    }
+
+    private instanciateDependency(entry: ServiceEntry, ctx: InstanciationContext): void {
+        const instantiationSvc = entry.provider.get(IInstantiationService, true);
+        instantiationSvc.instanciateService(entry, ctx);
     }
 
     private instanciateDelayedService(entry: ServiceEntry, ctx: InstanciationContext): any {

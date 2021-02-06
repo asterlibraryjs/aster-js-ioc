@@ -117,7 +117,7 @@ export class ServiceProvider implements IServiceProvider {
     *getAll<T>(serviceId: ServiceIdentifier<T>, currentScopeOnly?: boolean): Iterable<T> {
         if (currentScopeOnly) {
             const descriptors = this._services.get(serviceId);
-            return this.fetchOrCreateInstances(descriptors);
+            yield* this.fetchOrCreateInstances(descriptors);
         }
         else {
             for (const provider of this._dependencyResolver.resolveProviders(serviceId)) {
@@ -136,7 +136,7 @@ export class ServiceProvider implements IServiceProvider {
 
     protected *fetchOrCreateInstances(descriptors: Iterable<IServiceDescriptor>): Iterable<any> {
         for (const descriptor of descriptors) {
-            yield* this.fetchOrCreateInstance(descriptor);
+            yield this.fetchOrCreateInstance(descriptor);
         }
     }
 }
