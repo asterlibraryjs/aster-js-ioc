@@ -83,7 +83,7 @@ export class DependencyResolver implements IDependencyResolver {
                 .filter(e => !e.provider.getScopeInstance(e.desc));
 
             graph.add({ ...entry, dependencies }, ...serviceEntries);
-            stack.push(...serviceEntries.filter(e => !graph.has(e)));
+            stack.push(...serviceEntries.filter(e => !graph.has(e) && !e.desc.delayed));
         }
         while (stack.length);
 

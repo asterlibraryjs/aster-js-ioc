@@ -5,9 +5,7 @@ import { ServiceEntry } from "./service-entry";
 export class InstanciationContext {
     private readonly _instances: HashMap<ServiceEntry, any>;
 
-    constructor(
-        private readonly _graph: TopologicalGraph<ServiceEntry>
-    ) {
+    constructor() {
         this._instances = new HashMap(e => e.uid);
     }
 
@@ -17,9 +15,5 @@ export class InstanciationContext {
 
     getInstance(entry: ServiceEntry): any {
         return this._instances.get(entry);
-    }
-
-    *entries(): Iterable<ServiceEntry> {
-        yield* this._graph;
     }
 }
