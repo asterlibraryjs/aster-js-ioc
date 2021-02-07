@@ -10,10 +10,29 @@ export interface ICustomerService {
     getAddress(customerId: string): Promise<string>;
 }
 
+export const IUIService = ServiceIdentifier<IUIService>("IUIService");
+export interface IUIService {
+    render(output: string[]): Promise<void>;
+}
+
 @ServiceContract(IHttpService)
 export class HttpService {
     async get(url: string): Promise<string> {
         return `Data from ${url}`;
+    }
+}
+
+@ServiceContract(IUIService)
+export class UIService {
+    constructor(
+        private readonly _customerId: string,
+        @ICustomerService readonly customerService: ICustomerService
+    ) { }
+
+    async render(output: string[]): Promise<void> {
+        output.push(
+            await this.customerService.getAddress(this._customerId)
+        );
     }
 }
 
@@ -44,7 +63,7 @@ export class AdvancedCustomerService {
         const req = this._customerServices
             .filter(svc => svc != this)
             .map(svc => svc.getAddress(customerId));
-            
+
         const res = await Promise.all(req);
         return res.join("<br/>");
     }

@@ -8,7 +8,6 @@ import { IServiceDescriptor, ServiceDescriptor, ServiceScope } from "../service-
 import { IServiceProvider, } from "./iservice-provider";
 import { IDependencyResolver } from "./idependency-resolver";
 import { IInstantiationService } from "./iinstantiation-service";
-import { EventArgs } from "@aster-js/events";
 import { InstantiationService } from "./instantiation-service";
 import { DependencyResolver } from "./dependency-resolver";
 
@@ -26,7 +25,7 @@ export class ServiceProvider implements IServiceProvider {
         this._dependencyResolver = this.createDependencyResolver();
         this._instanciationService = this.createInstanciationService();
         this._instanciationService.onDidServiceInstantiated(this.onDidServiceInstantiated, this);
-        
+
         this.addCoreService(IDependencyResolver, this._dependencyResolver);
         this.addCoreService(IInstantiationService, this._instanciationService);
         this.addCoreService(IServiceProvider, this);
@@ -46,9 +45,9 @@ export class ServiceProvider implements IServiceProvider {
         this._instances.set(desc, instance);
     }
 
-    protected onDidServiceInstantiated({ detail }: EventArgs<[desc: IServiceDescriptor, instance: any]>) {
-        if (detail[0].scope !== ServiceScope.transient) {
-            this._instances.set(...detail);
+    protected onDidServiceInstantiated(desc: IServiceDescriptor, instance: any) {
+        if (desc.scope !== ServiceScope.transient) {
+            this._instances.set(desc, instance);
         }
     }
 

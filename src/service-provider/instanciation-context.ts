@@ -1,11 +1,12 @@
 import { HashMap } from "@aster-js/collections";
-import { TopologicalGraph } from "@aster-js/iterators";
 import { ServiceEntry } from "./service-entry";
 
 export class InstanciationContext {
     private readonly _instances: HashMap<ServiceEntry, any>;
 
-    constructor() {
+    constructor(
+        readonly target: ServiceEntry
+    ) {
         this._instances = new HashMap(e => e.uid);
     }
 
