@@ -27,11 +27,11 @@
   "dependencies": {
     "tslib": "^2.1.0",
     "@aster-js/core": "^1.1.0",
-    "@aster-js/async": "^1.0.0",
+    "@aster-js/async": "^1.0.1",
     "@aster-js/decorators": "^1.0.0",
     "@aster-js/collections": "^1.0.1",
     "@aster-js/iterators": "^1.0.2",
-    "@aster-js/events": "^1.0.0"
+    "@aster-js/events": "^1.0.1"
   },
   "devDependencies": {
     "rollup": "^2.38.5",

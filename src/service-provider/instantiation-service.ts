@@ -1,10 +1,10 @@
 import { IDisposable, Lazy, asserts } from "@aster-js/core";
+import { EventEmitter, IEvent } from "@aster-js/events";
 
 import { IServiceFactory, ServiceContract } from "../service-registry";
 import { IServiceDescriptor, ServiceFactoryDescriptor } from "../service-descriptors";
 
 import { IDependencyResolver } from "./idependency-resolver";
-import { EventEmitter, IEvent } from "@aster-js/events";
 import { IInstantiationService } from "./iinstantiation-service";
 import { InstanciationContext } from "./instanciation-context";
 import { ServiceEntry } from "./service-entry";
@@ -21,32 +21,57 @@ export class InstantiationService implements IInstantiationService {
 
     createService(desc: IServiceDescriptor): any {
         const entry = this._dependencyResolver.resolveEntry(desc);
-        if (entry) {
+        return entry && this.createServiceCore(entry);
+    }
+
+    private createServiceCore(entry: ServiceEntry, instanciateDelayed?: boolean): any {
+        if (!entry.desc.delayed || instanciateDelayed) {
             const ctx = this.instanciateDependencyGraph(entry);
             return ctx.getInstance(entry);
         }
+        return this.createDelayedInstance(entry);
     }
 
     instanciateService(entry: ServiceEntry, ctx: InstanciationContext): void {
-        const instance = entry.provider.getScopeInstance(entry.desc);
-        if (instance) {
+        if (ctx.target.uid === entry.uid) {
+            const instance = this.createServiceInstance(entry, ctx);
             ctx.setInstance(entry, instance);
         }
         else {
-            entry.desc.delayed
-                ? this.instanciateDelayedService(entry, ctx)
-                : this.instanciateServiceCore(entry, ctx);
+            const instance = entry.provider.getScopeInstance(entry.desc);
+            if (instance) {
+                ctx.setInstance(entry, instance);
+            }
+            else {
+                const instance = entry.desc.delayed
+                    ? this.createDelayedInstance(entry)
+                    : this.createServiceInstance(entry, ctx);
+                ctx.setInstance(entry, instance);
+            }
         }
     }
 
-    private instanciateDependencyGraph(entry: ServiceEntry): InstanciationContext {
-        const ctx = new InstanciationContext();
+    private createDelayedInstance(entry: ServiceEntry): any {
+        const lazyValue = new Lazy(() => this.createServiceCore(entry, true), entry.desc.ctor);
+        const proxy = lazyValue.get();
+        this.onInstanceCreated(entry.desc, proxy);
+        return proxy;
+    }
 
+
+    private instanciateDependencyGraph(entry: ServiceEntry): InstanciationContext {
         const graph = this._dependencyResolver.resolveDependencyGraph(entry);
-        for (const entry of graph.nodes()) {
-            if (entry.desc.delayed) {
-                this.instanciateDependency(entry, ctx);
-                graph.delete(entry);
+
+        const ctx = new InstanciationContext(entry);
+        if (entry.desc.delayed) {
+            const proxy = entry.provider.getScopeInstance(entry.desc);
+            ctx.setInstance(entry, proxy);
+        }
+
+        for (const node of graph.nodes()) {
+            if (node.desc.delayed && entry.uid !== node.uid) {
+                this.instanciateDependency(node, ctx);
+                graph.delete(node);
             }
         }
 
@@ -62,18 +87,7 @@ export class InstantiationService implements IInstantiationService {
         instantiationSvc.instanciateService(entry, ctx);
     }
 
-    private instanciateDelayedService(entry: ServiceEntry, ctx: InstanciationContext): any {
-        const lazyValue = new Lazy(() => {
-            this.instanciateServiceCore(entry, ctx);
-            return ctx.getInstance(entry)
-        }, entry.desc.ctor);
-
-        const proxy = lazyValue.get();
-        ctx.setInstance(entry, proxy);
-        this.onInstanceCreated(entry.desc, proxy);
-    }
-
-    private instanciateServiceCore(entry: ServiceEntry, ctx: InstanciationContext): void {
+    private createServiceInstance(entry: ServiceEntry, ctx: InstanciationContext): any {
         asserts.defined(entry.dependencies);
 
         const dependencies = entry.dependencies.map(dep => dep.resolveArg(ctx));
@@ -92,11 +106,11 @@ export class InstantiationService implements IInstantiationService {
             }
         }
 
-        ctx.setInstance(entry, instance);
         this.onInstanceCreated(entry.desc, instance);
+        return instance;
     }
 
     private onInstanceCreated(desc: IServiceDescriptor, instance: any): void {
-        this._onDidServiceInstantiated.trigger([desc, instance]);
+        this._onDidServiceInstantiated.emit(desc, instance);
     }
 }

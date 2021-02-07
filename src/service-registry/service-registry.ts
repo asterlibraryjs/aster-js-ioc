@@ -16,7 +16,7 @@ export namespace ServiceRegistry {
 
     export function* dependencies(ctor: Constructor): Iterable<DependencyParameter> {
         const deps = _dependencies.get(ctor);
-        if (deps) yield* deps;
+        if (deps) yield* deps.sort((l, r) => l.index - r.index);
     }
 
     export function register(serviceId: ServiceIdentifier, options: ServiceIdentifierOptions): void {
