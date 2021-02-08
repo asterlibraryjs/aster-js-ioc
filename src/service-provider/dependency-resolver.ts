@@ -79,11 +79,12 @@ export class DependencyResolver implements IDependencyResolver {
 
             const dependencies = [...dependencyResolver.resolveDependencies(entry.desc.ctor)];
 
-            const serviceEntries = dependencies.flatMap(dep => [...dep.entries()])
-                .filter(e => !e.provider.getScopeInstance(e.desc));
-
+            const serviceEntries = dependencies.flatMap(dep => [...dep.entries()]);
             graph.add({ ...entry, dependencies }, ...serviceEntries);
-            stack.push(...serviceEntries.filter(e => !graph.has(e) && !e.desc.delayed));
+
+            const serviceToResolve = serviceEntries
+                .filter(e => !graph.has(e) && !e.desc.delayed && !ServiceEntry.getScopeInstance(e));
+            stack.push(...serviceToResolve);
         }
         while (stack.length);
 

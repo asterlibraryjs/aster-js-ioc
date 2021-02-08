@@ -25,8 +25,11 @@ export type ServiceEntry = {
 }
 
 export namespace ServiceEntry {
-    export function create(desc: IServiceDescriptor, provider: IServiceProvider) {
+    export function create(desc: IServiceDescriptor, provider: IServiceProvider): ServiceEntry {
         const uid = `${Tags.hashId(desc)}-${Tags.hashId(provider)}`;
         return { uid, desc, provider };
+    }
+    export function getScopeInstance({ desc, provider }: ServiceEntry): any {
+        return provider.getScopeInstance(desc);
     }
 }

@@ -118,9 +118,11 @@ describe("Dependency Injection without Graph", () => {
 
         const result = services.get(ICustomerService);
 
-        sassert.calledOnce(createInstanceSpy);
+        sassert.notCalled(createInstanceSpy); // Factory should not be called immediatly
+
         assert.instanceOf(result, NoDependencyCustomerService);
         assert.equal(await result!.getAddress("bo"), "Hello bo !");
+        sassert.calledOnce(createInstanceSpy);
     });
 
     it("Should create a child module", () => {
