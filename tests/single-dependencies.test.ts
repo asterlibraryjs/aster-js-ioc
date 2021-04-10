@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { IServiceProvider, IoCKernel } from "../src";
-import { BasicCustomerService, HttpService, ICustomerService, IHttpService, IUIService, UIService } from "./service.mocks";
+import { BasicCustomerService, HttpClient, HttpService, ICustomerService, IHttpService, InjectDependencyCustomerService, IUIService, UIService } from "./service.mocks";
 
 describe("Dependency Injection with 1 level of graph resolution", () => {
 
@@ -19,6 +19,35 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
         assert.equal(await result.getAddress("Bob"), "Data from /api/customers/Bob");
     });
 
+    it("Should resolve a service instance with a dependency without Id", async () => {
+        const { services } = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addSingleton(InjectDependencyCustomerService)
+                    .addSingleton(HttpClient);
+            })
+            .build();
+
+        const result = services.get(ICustomerService, true);
+
+        assert.instanceOf(result, InjectDependencyCustomerService);
+        assert.equal(await result.getAddress("Nob"), "HttpClient data from /api/customers/Nob");
+    });
+
+    it("Should not resolve an optional service instance with a dependency without Id", async () => {
+        const { services } = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addSingleton(InjectDependencyCustomerService);
+            })
+            .build();
+
+        const result = services.get(ICustomerService, true);
+
+        assert.instanceOf(result, InjectDependencyCustomerService);
+        assert.equal(await result.getAddress("Nob"), "not found");
+    });
+
     it("Should no instanciate services binded through delayed service", async () => {
         const { services } = IoCKernel.create()
             .configure(services => {
@@ -34,11 +63,11 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
         assert.instanceOf(result, UIService);
         assert.instanceOf((result as UIService).customerService, BasicCustomerService);
 
-        const [desc] = services.getScopeDescriptors(IHttpService)
-        assert.isUndefined(services.getScopeInstance(desc));
+        const [desc] = services.getOwnDescriptors(IHttpService)
+        assert.isUndefined(services.getOwnInstance(desc));
 
         await result.render([]);
 
-        assert.instanceOf(services.getScopeInstance(desc), HttpService);
+        assert.instanceOf(services.getOwnInstance(desc), HttpService);
     });
 });

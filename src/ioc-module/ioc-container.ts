@@ -1,7 +1,7 @@
 import { Disposable, IDisposable } from "@aster-js/core";
 import { AbortableToken, AbortToken, Deferred, Delayed } from "@aster-js/async";
 
-import { IServiceAccessor, IServiceProvider } from "../service-provider";
+import { IServiceAccessor, ServiceProvider } from "../service-provider";
 
 import { IIoCModule } from "./iioc-module";
 import { IIoCContainerBuilder, IoCModuleSetupDelegate } from "./iioc-module-builder";
@@ -17,12 +17,12 @@ export class IoCContainer extends Disposable implements IIoCModule {
 
     get running(): boolean { return !this._token?.aborted; }
 
-    get services(): IServiceProvider { return this._provider; }
+    get services(): ServiceProvider { return this._provider; }
 
     get ready(): PromiseLike<void> { return this._ready; }
 
     constructor(
-        private readonly _provider: IServiceProvider,
+        private readonly _provider: ServiceProvider,
         setupCallbacks: Iterable<IoCModuleSetupDelegate>
     ) {
         super();
@@ -31,14 +31,17 @@ export class IoCContainer extends Disposable implements IIoCModule {
         this._setupCallbacks = [...setupCallbacks];
     }
 
-    createScope(name: string): IIoCContainerBuilder {
+    createChildScope(name: string): IIoCContainerBuilder {
+        if(this._children.has(name)) throw new Error(`Duplicate child scope "${name}"`);
+
+
         const delayed = new Delayed<IIoCModule>();
         this._children.set(name, delayed);
         return new IoCModuleBuilder(delayed, this);
     }
 
-    async start(): Promise<void> {
-        if (this._token) throw new Error(`Current module has already been started, cannot start the same module twice`);
+    async start(): Promise<boolean> {
+        if (this._token) return false;
 
         const token = AbortToken.create();
         this._token = token;
@@ -52,9 +55,12 @@ export class IoCContainer extends Disposable implements IIoCModule {
                 await setup(acc, token);
             }
             this._ready.resolve();
+            return true;
         }
         catch (err) {
+            token.abort(err);
             this._ready.reject(err);
+            return false;
         }
     }
 

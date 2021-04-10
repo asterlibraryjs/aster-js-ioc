@@ -14,7 +14,7 @@ export class ServiceCollection extends Disposable implements IServiceCollection 
     constructor(descriptors: Iterable<IServiceDescriptor> = []) {
         super();
         const values = ServiceCollection.entries(descriptors);
-        this._store = Lookup.create(values, v => ServiceIdentityTag.get(v));
+        this._store = Lookup.create(values, ServiceIdentityTag.get);
     }
 
     has(serviceIdOrDescriptor: ServiceIdentifier | IServiceDescriptor): boolean {

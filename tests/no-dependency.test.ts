@@ -130,7 +130,7 @@ describe("Dependency Injection without Graph", () => {
             .configure(services => services.addSingleton(NoDependencyCustomerService))
             .build();
 
-        const childScope = container.createScope("child").build();
+        const childScope = container.createChildScope("child").build();
 
         class Bob {
             constructor(@ICustomerService readonly svc: any) { }

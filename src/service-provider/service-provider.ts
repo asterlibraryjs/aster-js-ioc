@@ -3,7 +3,7 @@ import { Iterables } from "@aster-js/iterators";
 
 import { ServiceIdentifier, ServiceContract, ServiceIdentityTag } from "../service-registry";
 import { IServiceCollection } from "../service-collection";
-import { IServiceDescriptor, ServiceDescriptor, ServiceScope } from "../service-descriptors";
+import { IServiceDescriptor, ServiceDescriptor, ServiceLifetime, ServiceScope } from "../service-descriptors";
 
 import { IServiceProvider, } from "./iservice-provider";
 import { IDependencyResolver } from "./idependency-resolver";
@@ -12,14 +12,14 @@ import { InstantiationService } from "./instantiation-service";
 import { DependencyResolver } from "./dependency-resolver";
 
 @ServiceContract(IServiceProvider)
-export class ServiceProvider implements IServiceProvider {
+export class ServiceProvider implements IServiceProvider{
     private readonly _instances: Map<IServiceDescriptor, any>;
     private readonly _dependencyResolver: IDependencyResolver;
     private readonly _instanciationService: IInstantiationService;
 
     constructor(
         private readonly _services: IServiceCollection,
-        private readonly _parent?: IServiceProvider
+        private readonly _parent?: ServiceProvider
     ) {
         this._instances = new Map();
         this._dependencyResolver = this.createDependencyResolver();
@@ -40,13 +40,13 @@ export class ServiceProvider implements IServiceProvider {
     }
 
     protected addCoreService<T extends Object>(serviceId: ServiceIdentifier<T>, instance: T): void {
-        const desc = new ServiceDescriptor(ServiceScope.scoped, serviceId, instance.constructor as Constructor, [], false);
+        const desc = new ServiceDescriptor(serviceId, ServiceLifetime.scoped, ServiceScope.container, instance.constructor as Constructor, [], false);
         this._services.add(desc);
         this._instances.set(desc, instance);
     }
 
     protected onDidServiceInstantiated(desc: IServiceDescriptor, instance: any) {
-        if (desc.scope !== ServiceScope.transient) {
+        if (desc.lifetime !== ServiceLifetime.transient) {
             this._instances.set(desc, instance);
         }
     }
@@ -78,15 +78,15 @@ export class ServiceProvider implements IServiceProvider {
         return [...baseArgs, ...dependencies.map(d => d.resolveArg())];
     }
 
-    parent(): IServiceProvider | undefined {
+    parent(): ServiceProvider | undefined {
         return this._parent;
     }
 
-    getScopeDescriptors(serviceId: ServiceIdentifier): Iterable<IServiceDescriptor> {
+    getOwnDescriptors(serviceId: ServiceIdentifier): Iterable<IServiceDescriptor> {
         return this._services.get(serviceId);
     }
 
-    getScopeInstance(desc: IServiceDescriptor): any {
+    getOwnInstance(desc: IServiceDescriptor): any {
         return this._instances.get(desc);
     }
 
@@ -98,16 +98,16 @@ export class ServiceProvider implements IServiceProvider {
 
             const first = Iterables.first(descriptors);
             if (first) {
-                return this.fetchOrCreateInstance(first);
+                return this.fetchOrCreateOwnInstance(first);
             }
         }
         else if (this._services.has(descriptorOrId)) {
-            return this.fetchOrCreateInstance(descriptorOrId as IServiceDescriptor);
+            return this.fetchOrCreateOwnInstance(descriptorOrId as IServiceDescriptor);
         }
-        const entry = this._dependencyResolver.resolveEntry(descriptorOrId);
 
+        const entry = this._dependencyResolver.resolveEntry(descriptorOrId);
         if (entry) {
-            return entry.provider.get(descriptorOrId, required);
+            return entry.provider.fetchOrCreateOwnInstance(entry.desc);
         }
 
         if (required) throw new Error(`No binding found for "${descriptorOrId}" from current scope.`);
@@ -116,7 +116,7 @@ export class ServiceProvider implements IServiceProvider {
     *getAll<T>(serviceId: ServiceIdentifier<T>, currentScopeOnly?: boolean): Iterable<T> {
         if (currentScopeOnly) {
             const descriptors = this._services.get(serviceId);
-            yield* this.fetchOrCreateInstances(descriptors);
+            yield* this.fetchOrCreateOwnInstances(descriptors);
         }
         else {
             for (const provider of this._dependencyResolver.resolveProviders(serviceId)) {
@@ -125,17 +125,17 @@ export class ServiceProvider implements IServiceProvider {
         }
     }
 
-    protected fetchOrCreateInstance(descriptor: IServiceDescriptor): any {
-        const instance = this.getScopeInstance(descriptor);
+    protected fetchOrCreateOwnInstance<T>(descriptor: IServiceDescriptor): T {
+        const instance = this.getOwnInstance(descriptor);
         if (!instance) {
             return this._instanciationService.createService(descriptor);
         }
         return instance;
     }
 
-    protected *fetchOrCreateInstances(descriptors: Iterable<IServiceDescriptor>): Iterable<any> {
+    protected *fetchOrCreateOwnInstances(descriptors: Iterable<IServiceDescriptor>): Iterable<any> {
         for (const descriptor of descriptors) {
-            yield this.fetchOrCreateInstance(descriptor);
+            yield this.fetchOrCreateOwnInstance(descriptor);
         }
     }
 }

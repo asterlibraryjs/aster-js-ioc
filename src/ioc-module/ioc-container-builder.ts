@@ -1,8 +1,8 @@
 import { Disposable } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection";
-import { IServiceFactory, ServiceIdentifier, ServiceIdentityTag } from "../service-registry";
-import { IServiceProvider } from "../service-provider";
+import { ServiceIdentifier, ServiceIdentityTag } from "../service-registry";
+import { ServiceProvider } from "../service-provider";
 
 import { IIoCContainerBuilder } from "./iioc-module-builder";
 import { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
@@ -50,10 +50,10 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
 
         return this.createModule(provider, [...this._setups]);
     }
- 
-    protected abstract createModule(provider: IServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule;
 
-    protected abstract createServiceProvider(services: ServiceCollection): IServiceProvider;
+    protected abstract createModule(provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule;
 
-    protected configureDefaultServices?(services: ServiceCollection, provider: IServiceProvider): void;
+    protected abstract createServiceProvider(services: ServiceCollection): ServiceProvider;
+
+    protected configureDefaultServices?(services: ServiceCollection, provider: ServiceProvider): void;
 }

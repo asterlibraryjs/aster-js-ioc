@@ -5,8 +5,9 @@ import { ServiceFactoryConstructor, ServiceFactoryTag } from "../service-registr
 import { ServiceDescriptor } from "../service-descriptors/service-descriptor";
 import { ServiceCollection } from "../service-collection/service-collection";
 
-import { IServiceDescriptor, ServiceOptions, ServiceScope } from "./iservice-descriptor";
+import { IServiceDescriptor, ServiceOptions, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
 import { ServiceFactoryDescriptor } from "./service-factory-descriptor";
+import { ServiceRegistry } from "src/service-registry";
 
 declare module "../service-collection/service-collection" {
     interface ServiceCollection {
@@ -18,27 +19,28 @@ declare module "../service-collection/service-collection" {
 
 ServiceCollection.prototype.addScoped = function (this: ServiceCollection, ctor: Constructor, options: ServiceOptions = {}) {
     return this.add(
-        resolve(ServiceScope.scoped, ctor, options)
+        resolve(ServiceLifetime.scoped, ctor, options)
     );
 };
 
 ServiceCollection.prototype.addSingleton = function (this: ServiceCollection, ctor: Constructor, options: ServiceOptions = {}) {
     return this.add(
-        resolve(ServiceScope.singleton, ctor, options)
+        resolve(ServiceLifetime.singleton, ctor, options)
     );
 }
 
 ServiceCollection.prototype.addTransient = function (this: ServiceCollection, ctor: Constructor, options: ServiceOptions = {}) {
     return this.add(
-        resolve(ServiceScope.transient, ctor, options)
+        resolve(ServiceLifetime.transient, ctor, options)
     );
 };
 
-function resolve(scope: ServiceScope, ctor: Constructor, { baseArgs = [], delayed = false }: ServiceOptions): IServiceDescriptor {
+function resolve(lifetime: ServiceLifetime, ctor: Constructor, { baseArgs = [], delayed = false, scope = ServiceScope.both }: ServiceOptions): IServiceDescriptor {
     let serviceId = ServiceFactoryTag.get(ctor);
     if (serviceId) {
-        return new ServiceFactoryDescriptor(scope, serviceId, ctor as ServiceFactoryConstructor, baseArgs, delayed);
+        return new ServiceFactoryDescriptor(serviceId, lifetime, scope, ctor as ServiceFactoryConstructor, baseArgs, delayed);
     }
-    serviceId = ServiceContract.resolve(ctor, true);
-    return new ServiceDescriptor(scope, serviceId, ctor, baseArgs, delayed);
+    serviceId = ServiceContract.resolve(ctor);
+    return new ServiceDescriptor(serviceId, lifetime, scope, ctor, baseArgs, delayed);
+
 }

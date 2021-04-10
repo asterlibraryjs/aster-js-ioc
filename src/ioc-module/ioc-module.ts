@@ -1,4 +1,4 @@
-import { IServiceProvider } from "../service-provider";
+import { ServiceProvider } from "../service-provider";
 
 import { IIoCModule } from "./iioc-module";
 import { IoCModuleSetupDelegate } from "./iioc-module-builder";
@@ -9,7 +9,7 @@ export class IoCModule extends IoCContainer {
     get parent(): IIoCModule { return this._parent; }
 
     constructor(
-        provider: IServiceProvider,
+        provider: ServiceProvider,
         setupCallbacks: Iterable<IoCModuleSetupDelegate>,
         private readonly _parent: IIoCModule
     ) {

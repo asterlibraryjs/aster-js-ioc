@@ -15,7 +15,8 @@ export class CustomerService implements ICustomerService {
     addresses: Address[];
 
     constructor(
-        @IHttpService private readonly _httpService: IHttpService
+        @Inject(HttpClient) private readonly _httpClient: HttpClient,
+        @ICustomerService private readonly _customerService: ICustomerService
     ){}
 
     async loadAdresses(): Promise<void> {

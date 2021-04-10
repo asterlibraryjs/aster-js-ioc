@@ -2,23 +2,23 @@ import { Constructor } from "@aster-js/core";
 import { TopologicalGraph, Iterables } from "@aster-js/iterators";
 
 import { ServiceContract, ServiceIdentifier, ServiceIdentityTag, ServiceRegistry } from "../service-registry";
-import { IServiceDescriptor, ServiceScope } from "../service-descriptors";
+import { IServiceDescriptor, ServiceLifetime, ServiceScope } from "../service-descriptors";
 
-import { IServiceProvider, } from "./iservice-provider";
 import { IDependencyResolver } from "./idependency-resolver";
 import { IServiceDependency, ServiceEntry } from "./service-entry";
 import { MultipleServiceDependency, EmptyServiceDependency, SingleServiceDependency } from "./dependency-entry";
+import { ServiceProvider } from "./service-provider";
 
 @ServiceContract(IDependencyResolver)
 export class DependencyResolver implements IDependencyResolver {
 
     constructor(
-        private readonly _serviceProvider: IServiceProvider
+        private readonly _serviceProvider: ServiceProvider
     ) { }
 
-    *resolveProviders(serviceId: ServiceIdentifier): Iterable<IServiceProvider> {
+    *resolveProviders(serviceId: ServiceIdentifier): Iterable<ServiceProvider> {
         for (const svc of Iterables.create(this._serviceProvider, prev => prev.parent())) {
-            const descriptors = svc.getScopeDescriptors(serviceId);
+            const descriptors = svc.getOwnDescriptors(serviceId);
             if (Iterables.has(descriptors)) {
                 yield svc;
             }
@@ -38,9 +38,13 @@ export class DependencyResolver implements IDependencyResolver {
 
     *resolveEntries(serviceId: ServiceIdentifier): Iterable<ServiceEntry> {
         for (const svc of Iterables.create(this._serviceProvider, prev => prev.parent())) {
-            for (const desc of svc.getScopeDescriptors(serviceId)) {
-                if (svc === this._serviceProvider || desc.scope !== ServiceScope.scoped) {
-                    yield ServiceEntry.create(desc, svc);
+            for (const desc of svc.getOwnDescriptors(serviceId)) {
+                if (
+                    (svc === this._serviceProvider && desc.scope & ServiceScope.container) ||
+                    (svc !== this._serviceProvider && desc.scope & ServiceScope.children)
+                ) {
+                    const provider = desc.lifetime === ServiceLifetime.scoped ? this._serviceProvider : svc;
+                    yield ServiceEntry.create(desc, provider);
                 }
             }
         }

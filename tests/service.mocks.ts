@@ -1,4 +1,4 @@
-import { Many, ServiceContract, ServiceIdentifier } from "../src";
+import { Inject, Many, ServiceContract, ServiceIdentifier } from "../src";
 
 export const IHttpService = ServiceIdentifier<IHttpService>("IHttpService");
 export interface IHttpService {
@@ -13,6 +13,12 @@ export interface ICustomerService {
 export const IUIService = ServiceIdentifier<IUIService>("IUIService");
 export interface IUIService {
     render(output: string[]): Promise<void>;
+}
+
+export class HttpClient {
+    async get(url: string): Promise<string> {
+        return `HttpClient data from ${url}`;
+    }
 }
 
 @ServiceContract(IHttpService)
@@ -40,6 +46,18 @@ export class UIService {
 export class NoDependencyCustomerService {
     async getAddress(customerId: string): Promise<string> {
         return `Hello ${customerId} !`;
+    }
+}
+
+@ServiceContract(ICustomerService)
+export class InjectDependencyCustomerService {
+    constructor(
+        @Inject(HttpClient, true) private readonly _httpClient?: HttpClient
+    ) { }
+
+    async getAddress(customerId: string): Promise<string> {
+        return await this._httpClient?.get(`/api/customers/${customerId}`)
+            ?? "not found";
     }
 }
 
