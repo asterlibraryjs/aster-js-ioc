@@ -11,7 +11,7 @@ export interface DependencyParameter {
 }
 
 export namespace ServiceRegistry {
-    const _serviceIds: Map<string | symbol, [ServiceIdentifier, ServiceIdentifierOptions]> = new Map();
+    const _serviceIds: Map<string | symbol | Constructor, [ServiceIdentifier, ServiceIdentifierOptions]> = new Map();
     const _dependencies: Map<Constructor, DependencyParameter[]> = new Map();
 
     export function* dependencies(ctor: Constructor): Iterable<DependencyParameter> {
@@ -19,7 +19,19 @@ export namespace ServiceRegistry {
         if (deps) yield* deps.sort((l, r) => l.index - r.index);
     }
 
-    export function register(serviceId: ServiceIdentifier, options: ServiceIdentifierOptions): void {
+    export function get(tag: string | symbol | Constructor): ServiceIdentifier | null {
+        const entry = _serviceIds.get(tag);
+        return entry ? entry[0] : null;
+    }
+
+    export function resolve(ctor: Constructor): ServiceIdentifier {
+        const entry = _serviceIds.get(ctor);
+        if (entry) return entry[0];
+
+        return ServiceIdentifier.of(ctor);
+    }
+
+    export function add(serviceId: ServiceIdentifier, options: ServiceIdentifierOptions): void {
         const tagId = ServiceIdentityTag.get(serviceId);
 
         if (!tagId) {

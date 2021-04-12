@@ -7,8 +7,8 @@ export const IServiceProvider = ServiceIdentifier<IServiceProvider>("IServicePro
 
 export interface IServiceProvider {
     parent(): IServiceProvider | undefined;
-    getScopeDescriptors(serviceId: ServiceIdentifier): Iterable<IServiceDescriptor>;
-    getScopeInstance(desc: IServiceDescriptor): any;
+    getOwnDescriptors(serviceId: ServiceIdentifier): Iterable<IServiceDescriptor>;
+    getOwnInstance(desc: IServiceDescriptor): any;
     createInstance<T>(ctor: Constructor<T>, ...baseArgs: ReadonlyArray<any>): T;
     resolve(ctor: Constructor): Constructor;
     get<T>(serviceId: ServiceIdentifier<T>, required: true): T;

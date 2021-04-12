@@ -1,4 +1,4 @@
-import { IServiceProvider, ServiceAccessor } from "../service-provider";
+import { ServiceAccessor } from "../service-provider";
 import { ServiceCollection } from "../service-collection";
 import { ServiceProvider } from "../service-provider";
 
@@ -9,15 +9,15 @@ import { IoCModuleSetupDelegate } from "./iioc-module-builder";
 
 export class IoCKernelBuilder extends IoCContainerBuilder {
 
-    protected createModule(provider: IServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule {
+    protected createModule(provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule {
         return new IoCKernel(provider, setups);
     }
 
-    protected createServiceProvider(services: ServiceCollection): IServiceProvider {
+    protected createServiceProvider(services: ServiceCollection): ServiceProvider {
         return new ServiceProvider(services);
     }
 
-    protected configureDefaultServices(services: ServiceCollection, provider: IServiceProvider): void {
+    protected configureDefaultServices(services: ServiceCollection, provider: ServiceProvider): void {
         services.addTransient(ServiceAccessor);
     }
 }

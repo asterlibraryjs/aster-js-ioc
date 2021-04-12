@@ -2,15 +2,16 @@ import { Constructor } from "@aster-js/core";
 
 import { ServiceFactoryConstructor, ServiceIdentifier } from "../service-registry";
 
-import { IServiceDescriptor, ServiceScope } from "./iservice-descriptor";
+import { IServiceDescriptor, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
 
 export class ServiceFactoryDescriptor implements IServiceDescriptor {
 
     readonly targetType: Constructor;
 
     constructor(
-        readonly scope: ServiceScope,
         readonly serviceId: ServiceIdentifier,
+        readonly lifetime: ServiceLifetime,
+        readonly scope: ServiceScope,
         readonly ctor: ServiceFactoryConstructor,
         readonly baseArgs: readonly any[],
         readonly delayed: boolean
@@ -18,4 +19,3 @@ export class ServiceFactoryDescriptor implements IServiceDescriptor {
         this.targetType = ctor.targetType;
     }
 }
-

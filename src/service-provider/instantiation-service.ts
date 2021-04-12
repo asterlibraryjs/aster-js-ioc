@@ -21,62 +21,54 @@ export class InstantiationService implements IInstantiationService {
 
     createService(desc: IServiceDescriptor): any {
         const entry = this._dependencyResolver.resolveEntry(desc);
-        return entry && this.createServiceCore(entry);
-    }
-
-    private createServiceCore(entry: ServiceEntry, instanciateDelayed?: boolean): any {
-        if (!entry.desc.delayed || instanciateDelayed) {
-            const ctx = this.instanciateDependencyGraph(entry);
-            return ctx.getInstance(entry);
-        }
-        return this.createDelayedInstance(entry);
-    }
-
-    instanciateService(entry: ServiceEntry, ctx: InstanciationContext): void {
-        if (ctx.target.uid === entry.uid) {
-            const instance = this.createServiceInstance(entry, ctx);
-            ctx.setInstance(entry, instance);
-        }
-        else {
-            const instance = entry.provider.getScopeInstance(entry.desc);
-            if (instance) {
-                ctx.setInstance(entry, instance);
+        if (entry) {
+            if (!entry.desc.delayed) {
+                return this.createServiceCore(entry);
             }
-            else {
-                const instance = entry.desc.delayed
-                    ? this.createDelayedInstance(entry)
-                    : this.createServiceInstance(entry, ctx);
-                ctx.setInstance(entry, instance);
-            }
+            return this.createDelayedService(entry);
         }
     }
 
-    private createDelayedInstance(entry: ServiceEntry): any {
-        const lazyValue = new Lazy(() => this.createServiceCore(entry, true), entry.desc.ctor);
+    private createServiceCore(entry: ServiceEntry): any {
+        const ctx = this.instanciateDependencyGraph(entry);
+        return ctx.getInstance(entry);
+    }
+
+    private createDelayedService(entry: ServiceEntry): any {
+        const lazyValue = new Lazy(() => this.createServiceCore(entry), entry.desc.ctor);
         const proxy = lazyValue.get();
         this.onInstanceCreated(entry.desc, proxy);
         return proxy;
     }
 
+    instanciateService(entry: ServiceEntry, ctx: InstanciationContext): void {
+        const instance = entry.desc.delayed && ctx.target.uid !== entry.uid
+            ? this.createDelayedService(entry)
+            : this.createServiceInstance(entry, ctx);
+        ctx.setInstance(entry, instance);
+    }
 
     private instanciateDependencyGraph(entry: ServiceEntry): InstanciationContext {
         const graph = this._dependencyResolver.resolveDependencyGraph(entry);
 
         const ctx = new InstanciationContext(entry);
-        if (entry.desc.delayed) {
-            const proxy = entry.provider.getScopeInstance(entry.desc);
-            ctx.setInstance(entry, proxy);
-        }
 
+        const resolved = new Set();
         for (const node of graph.nodes()) {
-            if (node.desc.delayed && entry.uid !== node.uid) {
+            const instance = ServiceEntry.getScopeInstance(node);
+            if (instance) {
+                ctx.setInstance(node, instance);
+                resolved.add(node);
+            }
+            else if (node.desc.delayed) {
                 this.instanciateDependency(node, ctx);
-                graph.delete(node);
+                resolved.add(node);
             }
         }
 
-        for (const entry of graph) {
-            this.instanciateDependency(entry, ctx);
+        for (const node of graph) {
+            if (resolved.has(node) && node.uid !== entry.uid) continue;
+            this.instanciateDependency(node, ctx);
         }
 
         return ctx;
@@ -95,15 +87,26 @@ export class InstantiationService implements IInstantiationService {
 
         if (entry.desc instanceof ServiceFactoryDescriptor) {
             const factory = instance as IServiceFactory;
-            try {
-                instance = factory.create();
-                if (instance instanceof Promise) {
-                    throw new Error(`ServiceFactory cannot return async results (${entry.desc.serviceId}`);
-                }
-            }
-            finally {
-                IDisposable.safeDispose(factory);
-            }
+
+            const lazyValue = new Lazy(
+                () => {
+                    const instance = factory.create();
+                    try {
+                        if (instance instanceof Promise) {
+                            throw new Error(`ServiceFactory cannot return async results (${entry.desc.serviceId}`);
+                        }
+                    }
+                    finally {
+                        IDisposable.safeDispose(factory);
+                    }
+                    
+                    this.onInstanceCreated(entry.desc, instance);
+                    return instance;
+                },
+                entry.desc.targetType
+            );
+
+            instance = lazyValue.get();
         }
 
         this.onInstanceCreated(entry.desc, instance);

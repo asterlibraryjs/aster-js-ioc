@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { assert as sassert, spy } from "sinon";
-import { IServiceProvider, Optional, IoCKernel, IServiceFactory } from "../src";
-import { ICustomerService, NoDependencyCustomerService } from "./service.mocks";
+import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject } from "../src";
+import { HttpClient, ICustomerService, NoDependencyCustomerService } from "./service.mocks";
 
 describe("Dependency Injection without Graph", () => {
 
@@ -51,6 +51,59 @@ describe("Dependency Injection without Graph", () => {
 
         assert.isDefined(result.svc);
         assert.instanceOf(result.svc, NoDependencyCustomerService);
+    });
+
+    it("Should inject properly bound service dependency without id", () => {
+        const { services } = IoCKernel.create()
+            .configure(services => services.addSingleton(HttpClient))
+            .build();
+
+        class Bob {
+            constructor(@Inject(HttpClient) readonly svc: HttpClient) { }
+        }
+
+        const result = services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, HttpClient);
+    });
+
+    it("Should setup a service without id", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => services.addSingleton(HttpClient))
+            .setup(HttpClient, svc => svc.init())
+            .build();
+
+        class Bob {
+            constructor(@Inject(HttpClient) readonly svc: HttpClient) { }
+        }
+
+        await kernel.start();
+
+        const result = kernel.services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, HttpClient);
+        assert.isTrue(result.svc.initialized);
+    });
+
+    it("Should setup a service with id", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => services.addSingleton(NoDependencyCustomerService))
+            .setup(ICustomerService, svc => svc.init())
+            .build();
+
+        class Bob {
+            constructor(@ICustomerService readonly svc: NoDependencyCustomerService) { }
+        }
+
+        await kernel.start();
+
+        const result = kernel.services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, NoDependencyCustomerService);
+        assert.isTrue(result.svc.initialized);
     });
 
     it("Should throw an error when not enough arguments", () => {
@@ -118,9 +171,11 @@ describe("Dependency Injection without Graph", () => {
 
         const result = services.get(ICustomerService);
 
-        sassert.calledOnce(createInstanceSpy);
+        sassert.notCalled(createInstanceSpy); // Factory should not be called immediatly
+
         assert.instanceOf(result, NoDependencyCustomerService);
         assert.equal(await result!.getAddress("bo"), "Hello bo !");
+        sassert.calledOnce(createInstanceSpy);
     });
 
     it("Should create a child module", () => {
@@ -128,7 +183,7 @@ describe("Dependency Injection without Graph", () => {
             .configure(services => services.addSingleton(NoDependencyCustomerService))
             .build();
 
-        const childScope = container.createScope("child").build();
+        const childScope = container.createChildScope("child").build();
 
         class Bob {
             constructor(@ICustomerService readonly svc: any) { }

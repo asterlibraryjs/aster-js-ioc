@@ -1,8 +1,11 @@
-import { IIoCModule } from "./iioc-module";
+import { AbortToken } from "@aster-js/async";
+import { Constructor } from "@aster-js/core";
+
 import { IServiceAccessor } from "../service-provider/iservice-accessor";
 import { ServiceCollection } from "../service-collection";
 import { ServiceIdentifier } from "../service-registry";
-import { AbortToken } from "@aster-js/async";
+
+import { IIoCModule } from "./iioc-module";
 
 export type ServiceSetupDelegate<T = any> = (svc: T) => any;
 
@@ -12,7 +15,8 @@ export type IoCModuleSetupDelegate = (serviceAccessor: IServiceAccessor, token?:
 
 export interface IIoCContainerBuilder {
     configure(action: IoCModuleConfigureDelegate): this;
-    use<T>(action: IoCModuleSetupDelegate): this;
-    use<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
+    use(action: IoCModuleSetupDelegate): this;
+    setup<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
+    setup<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
     build(): IIoCModule;
 }

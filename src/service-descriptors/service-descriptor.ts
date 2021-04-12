@@ -3,15 +3,16 @@ import { Iterables } from "@aster-js/iterators";
 
 import { ServiceIdentifier, ServiceRegistry } from "../service-registry";
 
-import { IServiceDescriptor, ServiceScope } from "./iservice-descriptor";
+import { IServiceDescriptor, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
 
 export class ServiceDescriptor implements IServiceDescriptor {
 
     readonly targetType: Constructor;
 
     constructor(
-        readonly scope: ServiceScope,
         readonly serviceId: ServiceIdentifier,
+        readonly lifetime: ServiceLifetime,
+        readonly scope: ServiceScope,
         readonly ctor: Constructor,
         readonly baseArgs: readonly any[],
         readonly delayed: boolean
@@ -26,10 +27,10 @@ export class ServiceDescriptor implements IServiceDescriptor {
         if(first){
             if(first.index > this.baseArgs.length)  {
                 throw new Error(`Not enough arguments provided for service binding ${this.serviceId}. Provided: ${this.baseArgs.length}, Expected: ${first.index}`);
-            }            
+            }
             if(first.index < this.baseArgs.length) {
                 throw new Error(`Too much arguments provided for service binding ${this.serviceId}. Provided: ${this.baseArgs.length}, Expected: ${first.index}`);
-            }            
+            }
         }
     }
 }

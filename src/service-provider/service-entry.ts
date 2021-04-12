@@ -3,7 +3,7 @@ import { IServiceDescriptor } from "../service-descriptors";
 import { DependencyParameter } from "../service-registry";
 import { InstanciationContext } from "./instanciation-context";
 
-import { IServiceProvider, } from "./iservice-provider";
+import { ServiceProvider } from "./service-provider";
 
 export interface IServiceDependency {
     readonly param: DependencyParameter;
@@ -19,14 +19,17 @@ export type ServiceEntry = {
 
     readonly desc: IServiceDescriptor;
 
-    readonly provider: IServiceProvider;
+    readonly provider: ServiceProvider;
 
     readonly dependencies?: IServiceDependency[];
 }
 
 export namespace ServiceEntry {
-    export function create(desc: IServiceDescriptor, provider: IServiceProvider) {
+    export function create(desc: IServiceDescriptor, provider: ServiceProvider): ServiceEntry {
         const uid = `${Tags.hashId(desc)}-${Tags.hashId(provider)}`;
         return { uid, desc, provider };
+    }
+    export function getScopeInstance({ desc, provider }: ServiceEntry): any {
+        return provider.getOwnInstance(desc);
     }
 }
