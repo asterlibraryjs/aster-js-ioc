@@ -18,7 +18,7 @@ export class ServiceCollection extends Disposable implements IServiceCollection 
     }
 
     has(serviceIdOrDescriptor: ServiceIdentifier | IServiceDescriptor): boolean {
-        if (ServiceIdentityTag.has(serviceIdOrDescriptor)) {
+        if (ServiceIdentifier.is(serviceIdOrDescriptor)) {
             return this._store.has(serviceIdOrDescriptor as ServiceIdentifier);
         }
         const desc = serviceIdOrDescriptor as IServiceDescriptor;

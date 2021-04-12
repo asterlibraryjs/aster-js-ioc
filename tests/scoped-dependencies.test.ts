@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { IoCKernel } from "../src";
+import { IoCKernel, ServiceScope } from "../src";
 import { BasicCustomerService, ICustomerService, NoDependencyCustomerService, HttpService, AdvancedCustomerService } from "./service.mocks";
 
 describe("Scopes", () => {
@@ -45,5 +45,41 @@ describe("Scopes", () => {
         assert.instanceOf(result1, BasicCustomerService);
         assert.instanceOf(result2, BasicCustomerService);
         assert.notEqual(result1, result2);
+    });
+
+    it("Should not be able to get instance in a child when scope is limited to container", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addScoped(BasicCustomerService, { scope: ServiceScope.container })
+                    .addSingleton(HttpService);
+            })
+            .build();
+
+        const child = kernel.createChildScope("child1").build();
+
+        const kernelSvc = kernel.services.get(ICustomerService, false);
+        const childSvc = child.services.get(ICustomerService, false);
+
+        assert.isUndefined(childSvc);
+        assert.instanceOf(kernelSvc, BasicCustomerService);
+    });
+
+    it("Should not be able to get instance in container when scope is limited to children", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addScoped(BasicCustomerService, { scope: ServiceScope.children })
+                    .addSingleton(HttpService);
+            })
+            .build();
+
+        const child = kernel.createChildScope("child1").build();
+
+        const kernelSvc = kernel.services.get(ICustomerService, false);
+        const childSvc = child.services.get(ICustomerService, false);
+
+        assert.isUndefined(kernelSvc);
+        assert.instanceOf(childSvc, BasicCustomerService);
     });
 });

@@ -1,7 +1,7 @@
-import { Disposable } from "@aster-js/core";
+import { Constructor, Disposable } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection";
-import { ServiceIdentifier, ServiceIdentityTag } from "../service-registry";
+import { ServiceIdentifier, ServiceRegistry } from "../service-registry";
 import { ServiceProvider } from "../service-provider";
 
 import { IIoCContainerBuilder } from "./iioc-module-builder";
@@ -22,22 +22,38 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
         return this;
     }
 
-    use<T>(action: IoCModuleSetupDelegate): this;
-    use<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
-    use<T>(serviceIdOrAction: ServiceIdentifier<T> | IoCModuleSetupDelegate, action?: ServiceSetupDelegate<T>, required: boolean = true): this {
+    use(action: IoCModuleSetupDelegate): this {
         this.checkIfDisposed();
 
-        if (ServiceIdentityTag.has(serviceIdOrAction)) {
-            const setup: IoCModuleSetupDelegate = async (acc) => {
-                const svc = acc.get(serviceIdOrAction as ServiceIdentifier<T>, required);
-                if (svc) await action!(svc);
-            }
-            this._setups.push(setup)
+        this._setups.push(action);
+        return this;
+    }
+
+    setup<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
+    setup<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
+    setup<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, required: boolean = true): this {
+        this.checkIfDisposed();
+
+        if (ServiceIdentifier.is(serviceIdOrCtor)) {
+            this.setupCore(serviceIdOrCtor, action!, required);
         }
         else {
-            this._setups.push(serviceIdOrAction as IoCModuleSetupDelegate);
+            const serviceId = ServiceRegistry.resolve(serviceIdOrCtor);
+            if (serviceId) {
+                this.setupCore(serviceId, action!, required);
+            }
+            else {
+                throw new Error(`${serviceIdOrCtor} is neither a service id, neither a valid registered constructor.`);
+            }
         }
         return this;
+    }
+
+    protected setupCore<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required: boolean): void {
+        this._setups.push(async (acc) => {
+            const svc = acc.get(serviceId, required);
+            if (svc) await action(svc);
+        });
     }
 
     build(): IIoCModule {

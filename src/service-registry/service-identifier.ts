@@ -44,6 +44,11 @@ export namespace ServiceIdentifier {
     export function of<T>(ctor: Constructor<T>): ServiceIdentifier<T> {
         return create(ctor, { name: ctor.name });
     }
+
+    /** Check wether or not the provided object is a ServiceIdentifier */
+    export function is<T>(target: any): target is ServiceIdentifier<T> {
+        return serviceIdentityTag.has(target);
+    }
 }
 
 function create<T>(tag: string | symbol | Constructor, options: ServiceIdentifierOptions): ServiceIdentifier<T> {
