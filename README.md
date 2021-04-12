@@ -4,7 +4,7 @@
 
 This project provides a standalone dependency injection / inversion of control library.
 
-A more SPA service architecture / echosystem is built through `@aster-js/app`.
+A more SPA service architecture / ecosystem is built through `@aster-js/app`.
 
 It's compatible with any renderer and enable to structure your code using SOA architecture offering then decoupling, abstration, easy to unit test and modulary to your project.
 
@@ -16,7 +16,7 @@ First of all, its recommanded to declare explicitly the service id and implement
 
 #### Step 1: Declaring the service identifier and its contract:
 
-Make use of namespace merge and make the Service Identifier and the interface having the same name.
+Making use of declaration merge we can declare the Service Identifier and the interface using the same name to simplify futher declarations.
 
 ```typescript
 export const IHttpService = ServiceIdentifier<IHttpService>("IHttpService");
@@ -40,15 +40,17 @@ export class HttpService implements IHttpService {
 }
 ```
 
-The `ServiceContract` decorator is optional, but it will be usefull later to reduce the binding declaration enabling auto binding between interface and implementation.
+The `ServiceContract` decorator is optional, but it will be usefull later to reduce the binding declaration enabling auto discovery of the link between the  implementation and its service id.
 
-Explicit `implements` declaration can be removed when using the `@ServiceContract` decorator that already validate itself that the decorated class implements properly the service id targeted.
+Explicit `implements` declaration can be removed when using the `@ServiceContract` decorator that already validate by itself the decorated class implements properly the service id interface.
 
 ### Step 3: Create your a service without service id
 
-As its not mandatory, only recommanded, no service id is necessary, no `@ServiceContract` is required.
+As its not mandatory, only recommanded, no service id is necessary to register something in the IoC.
 
-This time we will consume the IHttpService, let see how we will declare the service to be properly injected later:
+`@ServiceContract` will be then unexpected.
+
+This time we will also consume the IHttpService.
 
 ```typescript
 export class CustomerService {
