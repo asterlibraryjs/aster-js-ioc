@@ -34,8 +34,8 @@ export function ServiceIdentifier<T>(nameOrOptions: string | ServiceIdentifierOp
     return create(hashValue, options);
 }
 
-
 export namespace ServiceIdentifier {
+    export const registry = new ServiceRegistry(of, ServiceIdentityTag);
     /**
      * Returns a new service identifier for a specific type
      *
@@ -53,13 +53,13 @@ export namespace ServiceIdentifier {
 
 function create<T>(tag: string | symbol | Constructor, options: ServiceIdentifierOptions): ServiceIdentifier<T> {
     const id = <ServiceIdentifier<T>>((target: Constructor, _: string | symbol, index: number) => {
-        ServiceRegistry.addDependency(target, id, index, "required");
+        ServiceIdentifier.registry.addDependency(target, id, index, "required");
     });
 
     serviceIdentityTag.set(id, tag);
 
     Object.assign(id, createImpl(id, options));
-    ServiceRegistry.add(id, options);
+    ServiceIdentifier.registry.add(id, options);
 
     return id;
 }

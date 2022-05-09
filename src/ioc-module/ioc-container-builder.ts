@@ -1,12 +1,12 @@
 import { Constructor, Disposable } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection";
-import { ServiceIdentifier, ServiceRegistry } from "../service-registry";
-import { ServiceProvider } from "../service-provider";
+import { ServiceIdentifier } from "../service-registry";
+import type { ServiceProvider } from "../service-provider";
 
-import { IIoCContainerBuilder } from "./iioc-module-builder";
-import { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
-import { IIoCModule } from "./iioc-module";
+import type { IIoCContainerBuilder } from "./iioc-module-builder";
+import type { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
+import type { IIoCModule } from "./iioc-module";
 
 export abstract class IoCContainerBuilder extends Disposable implements IIoCContainerBuilder {
     private readonly _services: ServiceCollection;
@@ -38,7 +38,7 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
             this.setupCore(serviceIdOrCtor, action!, required);
         }
         else {
-            const serviceId = ServiceRegistry.resolve(serviceIdOrCtor);
+            const serviceId = ServiceIdentifier.registry.resolve(serviceIdOrCtor);
             if (serviceId) {
                 this.setupCore(serviceId, action!, required);
             }

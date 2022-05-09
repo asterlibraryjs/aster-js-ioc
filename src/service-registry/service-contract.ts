@@ -1,7 +1,6 @@
 import { Constructor, Tag } from "@aster-js/core";
 
 import { ServiceIdentifier } from "./service-identifier";
-import { ServiceRegistry } from "./service-registry";
 
 const _serviceContractTag = Tag<ServiceIdentifier>("serviceContract");
 
@@ -17,6 +16,6 @@ export namespace ServiceContract {
 
     export function resolve(ctor: Constructor): ServiceIdentifier {
         return _serviceContractTag.get(ctor)
-            ?? ServiceRegistry.resolve(ctor);
+            ?? ServiceIdentifier.registry.resolve(ctor);
     }
 }

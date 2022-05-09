@@ -3,11 +3,11 @@ import { AbortableToken, AbortToken, Deferred, Delayed } from "@aster-js/async";
 
 import { IServiceAccessor, ServiceProvider } from "../service-provider";
 
-import { IIoCModule } from "./iioc-module";
-import { IIoCContainerBuilder, IoCModuleSetupDelegate } from "./iioc-module-builder";
-import { IoCModuleBuilder } from "./ioc-module-builder";
+import type { IIoCModule } from "./iioc-module";
+import type { IIoCContainerBuilder, IoCModuleSetupDelegate } from "./iioc-module-builder";
+import type { IoCModuleBuilder } from "./ioc-module-builder";
 
-export class IoCContainer extends Disposable implements IIoCModule {
+export abstract class IoCContainer extends Disposable implements IIoCModule {
     private readonly _setupCallbacks: IoCModuleSetupDelegate[];
     private readonly _children: Map<string, Delayed<IIoCModule>>;
     private readonly _ready: Deferred;
@@ -37,8 +37,10 @@ export class IoCContainer extends Disposable implements IIoCModule {
 
         const delayed = new Delayed<IIoCModule>();
         this._children.set(name, delayed);
-        return new IoCModuleBuilder(delayed, this);
+        return this.createIoCModuleBuilder(delayed);
     }
+
+    protected abstract createIoCModuleBuilder(target: Delayed<IIoCModule>): IoCModuleBuilder;
 
     async start(): Promise<boolean> {
         if (this._token) return false;

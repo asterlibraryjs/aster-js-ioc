@@ -1,7 +1,7 @@
 import { Constructor } from "@aster-js/core";
 import { Iterables } from "@aster-js/iterators";
 
-import { ServiceIdentifier, ServiceRegistry } from "../service-registry";
+import { ServiceIdentifier } from "../service-registry";
 
 import { IServiceDescriptor, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
 
@@ -22,7 +22,7 @@ export class ServiceDescriptor implements IServiceDescriptor {
     }
 
     private validateArgs(): void {
-        const dependencies = ServiceRegistry.dependencies(this.targetType);
+        const dependencies = ServiceIdentifier.registry.dependencies(this.targetType);
         const first = Iterables.first(dependencies);
         if(first){
             if(first.index > this.baseArgs.length)  {
