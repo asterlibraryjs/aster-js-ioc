@@ -1,7 +1,7 @@
 import { Constructor } from "@aster-js/core";
 import { TopologicalGraph, Iterables } from "@aster-js/iterators";
 
-import { ServiceContract, ServiceIdentifier, ServiceRegistry, ServiceUtilities } from "../service-registry";
+import { ServiceContract, ServiceIdentifier, ServiceUtilities } from "../service-registry";
 import { IServiceDescriptor, ServiceLifetime } from "../service-descriptors";
 
 import { IDependencyResolver } from "./idependency-resolver";
@@ -48,7 +48,7 @@ export class DependencyResolver implements IDependencyResolver {
     }
 
     *resolveDependencies(ctor: Constructor): Iterable<IServiceDependency> {
-        for (const param of ServiceRegistry.dependencies(ctor)) {
+        for (const param of ServiceIdentifier.registry.dependencies(ctor)) {
             if (param.type === "many") {
                 const entries = this.resolveEntries(param.serviceId);
                 yield new MultipleServiceDependency(param, entries)
