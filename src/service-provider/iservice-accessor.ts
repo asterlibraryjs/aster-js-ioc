@@ -7,4 +7,5 @@ export const IServiceAccessor = ServiceIdentifier<IServiceAccessor>("IServiceAcc
 export interface IServiceAccessor extends IDisposable {
     get<T>(serviceId: ServiceIdentifier<T>, required: true): T;
     get<T>(serviceId: ServiceIdentifier<T>, required?: boolean): T | undefined;
+    getAll<T>(serviceId: ServiceIdentifier<T>, currentScopeOnly?: boolean): Iterable<T>;
 }

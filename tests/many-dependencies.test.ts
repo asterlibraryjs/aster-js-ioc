@@ -23,4 +23,29 @@ describe("Dependency Injection with multiple instance of the same service", () =
         assert.instanceOf(result[2], AdvancedCustomerService);
         assert.equal(await result[2].getAddress("Bob"), "Hello Bob !<br/>Data from /api/customers/Bob");
     });
+
+    it("Should setup many instances of a service type", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addSingleton(NoDependencyCustomerService)
+                    .addSingleton(BasicCustomerService)
+                    .addSingleton(HttpService)
+                    .addSingleton(AdvancedCustomerService, { delayed: true }) // Self referencing
+            })
+            .setupMany(ICustomerService, c => c.init())
+            .build();
+
+        await kernel.start();
+
+        const result = [...kernel.services.getAll(ICustomerService)];
+
+        assert.equal(result.length, 3);
+        assert.instanceOf(result[0], NoDependencyCustomerService);
+        assert.instanceOf(result[1], BasicCustomerService);
+        assert.instanceOf(result[2], AdvancedCustomerService);
+        assert.isTrue(result[0].initialized);
+        assert.isTrue(result[1].initialized);
+        assert.isTrue(result[2].initialized);
+    });
 });
