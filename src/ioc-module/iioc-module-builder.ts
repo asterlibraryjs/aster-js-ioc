@@ -18,7 +18,7 @@ export interface IIoCContainerBuilder {
     use(action: IoCModuleSetupDelegate): this;
     setup<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
     setup<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
-    setupMany<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
-    setupMany<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
+    setupMany<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): this;
+    setupMany<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): this;
     build(): IIoCModule;
 }
