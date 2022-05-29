@@ -48,4 +48,21 @@ describe("Dependency Injection with multiple instance of the same service", () =
         assert.isTrue(result[1].initialized);
         assert.isTrue(result[2].initialized);
     });
+
+    it("Should try but fail to add multiple service with the same id", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => {
+                services
+                    .tryAddSingleton(NoDependencyCustomerService)
+                    .tryAddSingleton(BasicCustomerService)
+                    .tryAddSingleton(HttpService)
+                    .tryAddSingleton(AdvancedCustomerService, { delayed: true }) // Self referencing
+            })
+            .build();
+
+        const result = [...kernel.services.getAll(ICustomerService)];
+
+        assert.equal(result.length, 1);
+        assert.instanceOf(result[0], NoDependencyCustomerService);
+    });
 });
