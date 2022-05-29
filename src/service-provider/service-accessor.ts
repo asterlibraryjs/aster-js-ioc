@@ -9,12 +9,14 @@ import { ServiceProxy } from "./service-proxy";
 @ServiceContract(IServiceAccessor)
 export class ServiceAccessor extends Disposable implements IServiceAccessor {
     private readonly _proxies: Map<ServiceIdentifier, ServiceProxy>;
+    private readonly _manyProxies: Map<ServiceIdentifier, ServiceProxy[]>;
 
     constructor(
         @IServiceProvider private readonly _serviceProvider: IServiceProvider
     ) {
         super();
         this._proxies = new Map();
+        this._manyProxies = new Map();
     }
 
     get<T>(serviceId: ServiceIdentifier<T>, required: true): T;
@@ -25,17 +27,35 @@ export class ServiceAccessor extends Disposable implements IServiceAccessor {
         let serviceProxy = this._proxies.get(serviceId);
         if (!serviceProxy) {
             const instance = this._serviceProvider.get(serviceId, required);
-            if (instance) {
-                serviceProxy = new ServiceProxy<T>(instance);
-                this._proxies.set(serviceId, serviceProxy);
-            }
+
+            if (!instance) return;
+
+            serviceProxy = new ServiceProxy<T>(instance);
+            this._proxies.set(serviceId, serviceProxy);
         }
-        return serviceProxy?.proxy;
+        return serviceProxy.proxy;
+    }
+
+    *getAll(serviceId: ServiceIdentifier, currentScopeOnly?: boolean): Iterable<any> {
+        this.checkIfDisposed();
+
+        let serviceProxies = this._manyProxies.get(serviceId);
+        if (!serviceProxies) {
+            serviceProxies = [...this._serviceProvider.getAll(serviceId, currentScopeOnly)]
+                .map(x => new ServiceProxy(x));
+            this._manyProxies.set(serviceId, serviceProxies);
+        }
+
+        for (const p of serviceProxies) {
+            yield p.proxy;
+        }
     }
 
     protected dispose(): void {
-        for (const proxy of this._proxies.values()){
-            IDisposable.safeDispose(proxy);
-        }
+        IDisposable.safeDisposeAll(this._proxies.values());
+        this._proxies.clear();
+
+        IDisposable.safeDisposeAll([...this._manyProxies.values()].flat());
+        this._manyProxies.clear();
     }
 }
