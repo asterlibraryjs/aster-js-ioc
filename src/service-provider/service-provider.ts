@@ -1,7 +1,7 @@
 import { Constructor } from "@aster-js/core";
 import { Iterables } from "@aster-js/iterators";
 
-import { ServiceIdentifier, ServiceContract, ServiceUtilities } from "../service-registry";
+import { ServiceIdentifier, ServiceContract, isAllowedScope } from "../service-registry";
 import { IServiceCollection } from "../service-collection";
 import { IServiceDescriptor, ServiceDescriptor, ServiceLifetime, ServiceScope } from "../service-descriptors";
 
@@ -128,7 +128,7 @@ export class ServiceProvider implements IServiceProvider {
     }
 
     protected fetchOrCreateOwnInstance<T>(descriptor: IServiceDescriptor, required: boolean, owned: boolean): T | undefined {
-        if (ServiceUtilities.isAllowedScope(descriptor.scope, owned)) {
+        if (isAllowedScope(descriptor.scope, owned)) {
             const instance = this.getOwnInstance(descriptor);
             if (!instance) {
                 return this._instanciationService.createService(descriptor);

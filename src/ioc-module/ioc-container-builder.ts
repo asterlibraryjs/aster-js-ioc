@@ -1,7 +1,7 @@
 import { Constructor, Disposable } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection";
-import { ServiceIdentifier } from "../service-registry";
+import { ServiceIdentifier, resolveServiceId } from "../service-registry";
 import type { ServiceProvider } from "../service-provider";
 
 import type { IIoCContainerBuilder } from "./iioc-module-builder";
@@ -34,7 +34,7 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
     setup<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, required: boolean = true): this {
         this.checkIfDisposed();
 
-        const serviceId = this.resolveServiceId(serviceIdOrCtor);
+        const serviceId = resolveServiceId(serviceIdOrCtor);
 
         this._setups.push(async acc => {
             const svc = acc.get<T>(serviceId, required);
@@ -49,7 +49,7 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
     setupMany<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly: boolean = true): this {
         this.checkIfDisposed();
 
-        const serviceId = this.resolveServiceId(serviceIdOrCtor);
+        const serviceId = resolveServiceId(serviceIdOrCtor);
 
         this._setups.push(async acc => {
             const all = [...acc.getAll<T>(serviceId, currentScopeOnly)].map(action);
@@ -57,16 +57,6 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
         });
 
         return this;
-    }
-
-    protected resolveServiceId<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>) {
-        if (ServiceIdentifier.is(serviceIdOrCtor)) {
-            return serviceIdOrCtor;
-        }
-        const serviceId = ServiceIdentifier.registry.resolve(serviceIdOrCtor);
-        if (serviceId) return serviceId;
-
-        throw new Error(`${serviceIdOrCtor} is neither a service id, neither a valid registered constructor.`);
     }
 
     build(): IIoCModule {
