@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { assert as sassert, spy } from "sinon";
-import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject } from "../src";
-import { HttpClient, ICustomerService, NoDependencyCustomerService } from "./service.mocks";
+import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject, Many } from "../src";
+import { HttpClient, ICustomerService, NoContractCustomerService, NoDependencyCustomerService } from "./service.mocks";
 
 describe("Dependency Injection without Graph", () => {
 
@@ -38,9 +38,24 @@ describe("Dependency Injection without Graph", () => {
         assert.instanceOf(result.svc, NoDependencyCustomerService);
     });
 
-    it("Should inject properly bound service using service contract", () => {
+    it("Should inject properly service", () => {
         const { services } = IoCKernel.create()
-            .configure(services => services.addSingleton(NoDependencyCustomerService))
+            .configure(services => services.addSingleton(ICustomerService, NoContractCustomerService))
+            .build();
+
+        class Bob {
+            constructor(@ICustomerService readonly svc?: any) { }
+        }
+
+        const result = services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, NoContractCustomerService);
+    });
+
+    it("Should try inject properly bound service and succeed", () => {
+        const { services } = IoCKernel.create()
+            .configure(services => services.tryAddSingleton(NoDependencyCustomerService))
             .build();
 
         class Bob {
@@ -51,6 +66,41 @@ describe("Dependency Injection without Graph", () => {
 
         assert.isDefined(result.svc);
         assert.instanceOf(result.svc, NoDependencyCustomerService);
+    });
+
+    it("Should try inject properly service and succeed", () => {
+        const { services } = IoCKernel.create()
+            .configure(services => services.tryAddSingleton(ICustomerService, NoContractCustomerService))
+            .build();
+
+        class Bob {
+            constructor(@ICustomerService readonly svc?: any) { }
+        }
+
+        const result = services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, NoContractCustomerService);
+    });
+
+    it("Should try inject properly service and fail", () => {
+        const { services } = IoCKernel.create()
+            .configure(services => {
+                services
+                .addSingleton(NoDependencyCustomerService)
+                .tryAddSingleton(ICustomerService, NoContractCustomerService)
+            })
+            .build();
+
+        class Bob {
+            constructor(@Many(ICustomerService) readonly svc: any[]) { }
+        }
+
+        const result = services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.equal(result.svc.length, 1);
+        assert.instanceOf(result.svc[0], NoDependencyCustomerService);
     });
 
     it("Should inject properly bound service dependency without id", () => {
@@ -159,7 +209,7 @@ describe("Dependency Injection without Graph", () => {
 
     it("Should bind properly a factory", async () => {
         const { services } = IoCKernel.create()
-            .configure(services => services.addSingleton(
+            .configure(services => services.addSingletonFactory(
                 IServiceFactory.create(ICustomerService, acc => {
                     const provider = acc.get(IServiceProvider, true);
                     return provider.createInstance(NoDependencyCustomerService);
@@ -176,6 +226,26 @@ describe("Dependency Injection without Graph", () => {
         assert.instanceOf(result, NoDependencyCustomerService);
         assert.equal(await result!.getAddress("bo"), "Hello bo !");
         sassert.calledOnce(createInstanceSpy);
+    });
+
+    it("Should bind properly a factory with explicit id", async () => {
+        class CallbackServiceFactory implements IServiceFactory<ICustomerService> {
+
+            static readonly targetType = NoDependencyCustomerService ?? Object as any;
+
+            create(): ICustomerService {
+                return new NoDependencyCustomerService();
+            }
+        }
+
+        const { services } = IoCKernel.create()
+            .configure(services => services.addSingletonFactory(ICustomerService, CallbackServiceFactory))
+            .build();
+
+        const result = services.get(ICustomerService);
+
+        assert.instanceOf(result, NoDependencyCustomerService);
+        assert.equal(await result!.getAddress("bo"), "Hello bo !");
     });
 
     it("Should create a child module", () => {

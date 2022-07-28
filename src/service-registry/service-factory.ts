@@ -32,14 +32,11 @@ export namespace IServiceFactory {
                 @Optional(IServiceAccessor) private readonly _serviceAccessor: IServiceAccessor
             ) {
                 super();
+                this.registerForDispose(_serviceAccessor);
             }
 
             create(): T {
                 return callback(this._serviceAccessor);
-            }
-
-            protected dispose(): void {
-                IDisposable.safeDispose(this._serviceAccessor);
             }
         }
         return CallbackServiceFactory;
