@@ -54,6 +54,12 @@ export class UIService {
     }
 }
 
+export class NoContractCustomerService extends Initializable {
+    async getAddress(customerId: string): Promise<string> {
+        return `Hello ${customerId} ! Not attached here !`;
+    }
+}
+
 @ServiceContract(ICustomerService)
 export class NoDependencyCustomerService extends Initializable {
     async getAddress(customerId: string): Promise<string> {

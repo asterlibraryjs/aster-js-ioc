@@ -41,12 +41,12 @@ export namespace ServiceIdentifier {
      *
      * This method will strongly bind implementation to a specific type
      */
-    export function of<T>(ctor: Constructor<T>): ServiceIdentifier<T> {
+    export function of<T = any>(ctor: Constructor<T>): ServiceIdentifier<T> {
         return create(ctor, { name: ctor.name });
     }
 
     /** Check wether or not the provided object is a ServiceIdentifier */
-    export function is<T>(target: any): target is ServiceIdentifier<T> {
+    export function is<T = any>(target: any): target is ServiceIdentifier<T> {
         return serviceIdentityTag.has(target);
     }
 }
