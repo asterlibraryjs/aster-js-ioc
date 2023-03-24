@@ -13,6 +13,7 @@ describe("Dependency Injection with multiple instance of the same service", () =
                     .addSingleton(HttpService)
                     .addSingleton(AdvancedCustomerService, { delayed: true }) // Self referencing
             })
+            .setup(ICustomerService, x => x.init())
             .build();
 
         const result = [...services.getAll(ICustomerService)];

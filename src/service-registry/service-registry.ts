@@ -39,7 +39,7 @@ export class ServiceRegistry {
     }
 
     add(serviceId: ServiceIdentifier, options: ServiceIdentifierOptions): void {
-        const tagId = this._tag.get(serviceId);
+        const tagId = ServiceIdentityTag(serviceId);
 
         if (!tagId) {
             throw new Error(`Invalid service id: ${serviceId}`);
