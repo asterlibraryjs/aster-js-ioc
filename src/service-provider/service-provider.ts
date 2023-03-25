@@ -51,13 +51,13 @@ export class ServiceProvider implements IServiceProvider {
         }
     }
 
-    createInstance<T>(ctor: Constructor<T>, ...baseArgs: ReadonlyArray<any>): T {
+    createInstance<T>(ctor: Constructor<T>, ...baseArgs: readonly any[]): T {
         const args = this.resolveArgs(ctor, baseArgs);
         return new ctor(...args);
     }
 
     resolve(ctor: Constructor): Constructor {
-        const resolveArgs = (baseArgs: any[]) => this.resolveArgs(ctor, baseArgs);
+        const resolveArgs = (baseArgs: readonly any[]) => this.resolveArgs(ctor, baseArgs);
         return class extends ctor {
             constructor(...baseArgs: any[]) {
                 super(...resolveArgs(baseArgs));
@@ -66,7 +66,7 @@ export class ServiceProvider implements IServiceProvider {
         } as Constructor;
     }
 
-    private resolveArgs(ctor: Constructor, baseArgs: ReadonlyArray<any>): ReadonlyArray<any> {
+    private *resolveArgs(ctor: Constructor, baseArgs: readonly any[]): Iterable<any> {
         const dependencies = [...this._dependencyResolver.resolveDependencies(ctor)];
         if (!dependencies.length) return baseArgs;
 
@@ -75,7 +75,11 @@ export class ServiceProvider implements IServiceProvider {
             throw new Error(`Invalid base arguments, expected ${first.param.index} arguments, provided ${baseArgs.length}`);
         }
 
-        return [...baseArgs, ...dependencies.map(d => d.resolveArg())];
+        yield* baseArgs;
+
+        for (const dependency of dependencies) {
+            yield dependency.resolveArg();
+        }
     }
 
     parent(): ServiceProvider | undefined {
@@ -90,9 +94,9 @@ export class ServiceProvider implements IServiceProvider {
         return this._instances.get(desc);
     }
 
-    get<T>(serviceId: ServiceIdentifier<T>, required: true): T;
-    get<T>(serviceId: ServiceIdentifier<T> | IServiceDescriptor, required?: boolean): T | undefined;
-    get<T>(descriptorOrId: ServiceIdentifier | IServiceDescriptor, required: boolean = false): T | undefined {
+    get<T>(serviceId: ServiceIdentifier<T>, required: true, currentScopeOnly?: boolean): T;
+    get<T>(serviceId: ServiceIdentifier<T> | IServiceDescriptor, required?: boolean, currentScopeOnly?: boolean): T | undefined;
+    get<T>(descriptorOrId: ServiceIdentifier | IServiceDescriptor, required: boolean = false, currentScopeOnly: boolean = false): T | undefined {
         // Owned descriptor
         if (ServiceIdentifier.is(descriptorOrId)) {
             const descriptors = this._services.get(descriptorOrId as ServiceIdentifier);
@@ -106,10 +110,12 @@ export class ServiceProvider implements IServiceProvider {
             return this.fetchOrCreateOwnInstance(descriptorOrId as IServiceDescriptor, required, true);
         }
 
-        // Not owned descriptor
-        const entry = this._dependencyResolver.resolveEntry(descriptorOrId);
-        if (entry) {
-            return entry.provider.fetchOrCreateOwnInstance(entry.desc, required, false);
+        if (!currentScopeOnly) {
+            // Not owned descriptor
+            const entry = this._dependencyResolver.resolveEntry(descriptorOrId);
+            if (entry) {
+                return entry.provider.fetchOrCreateOwnInstance(entry.desc, required, false);
+            }
         }
 
         if (required) throw new Error(`No binding found for "${descriptorOrId}" from current scope.`);

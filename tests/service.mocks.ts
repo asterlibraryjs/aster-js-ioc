@@ -20,14 +20,20 @@ export interface IUIService {
 class Initializable {
     private _initialized: boolean = false;
 
+    get is() { return "Initializable"; }
+
     get initialized(): boolean { return this._initialized; }
 
     init(): void {
         this._initialized = true;
+        console.debug(this.is);
     }
 }
 
 export class HttpClient extends Initializable {
+
+    override get is() { return "HttpClient"; }
+
     async get(url: string): Promise<string> {
         return `HttpClient data from ${url}`;
     }
@@ -55,6 +61,9 @@ export class UIService {
 }
 
 export class NoContractCustomerService extends Initializable {
+
+    override get is() { return "NoContractCustomerService"; }
+
     async getAddress(customerId: string): Promise<string> {
         return `Hello ${customerId} ! Not attached here !`;
     }
@@ -62,6 +71,9 @@ export class NoContractCustomerService extends Initializable {
 
 @ServiceContract(ICustomerService)
 export class NoDependencyCustomerService extends Initializable {
+
+    override get is() { return "NoDependencyCustomerService"; }
+
     async getAddress(customerId: string): Promise<string> {
         return `Hello ${customerId} !`;
     }
@@ -69,6 +81,9 @@ export class NoDependencyCustomerService extends Initializable {
 
 @ServiceContract(ICustomerService)
 export class InjectDependencyCustomerService extends Initializable {
+
+    override get is() { return "InjectDependencyCustomerService"; }
+
     constructor(
         @Inject(HttpClient, true) private readonly _httpClient?: HttpClient
     ) {
@@ -83,6 +98,9 @@ export class InjectDependencyCustomerService extends Initializable {
 
 @ServiceContract(ICustomerService)
 export class BasicCustomerService extends Initializable {
+
+    override get is() { return "BasicCustomerService"; }
+
     constructor(
         @IHttpService private readonly _httpService: IHttpService
     ) {
@@ -96,11 +114,15 @@ export class BasicCustomerService extends Initializable {
 
 @ServiceContract(ICustomerService)
 export class AdvancedCustomerService extends Initializable {
+
+    override get is() { return "AdvancedCustomerService"; }
+
     constructor(
         @Many(ICustomerService) private readonly _customerServices: ICustomerService[]
     ) {
         super();
     }
+
     async getAddress(customerId: string): Promise<string> {
         const req = this._customerServices
             .filter(svc => svc != this)

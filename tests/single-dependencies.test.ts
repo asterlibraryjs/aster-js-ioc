@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { IServiceProvider, IoCKernel } from "../src";
+import { IoCKernel } from "../src";
 import { BasicCustomerService, HttpClient, HttpService, ICustomerService, IHttpService, InjectDependencyCustomerService, IUIService, UIService } from "./service.mocks";
 
 describe("Dependency Injection with 1 level of graph resolution", () => {
