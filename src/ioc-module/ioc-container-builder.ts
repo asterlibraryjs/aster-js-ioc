@@ -52,7 +52,8 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
         const serviceId = resolveServiceId(serviceIdOrCtor);
 
         this._setups.push(async acc => {
-            const all = [...acc.getAll<T>(serviceId, currentScopeOnly)].map(action);
+            const services = [...acc.getMany<T>(serviceId, currentScopeOnly)];
+            const all = services.map(x => action(x));
             await Promise.all(all);
         });
 

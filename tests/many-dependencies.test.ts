@@ -42,12 +42,12 @@ describe("Dependency Injection with multiple instance of the same service", () =
         const result = [...kernel.services.getAll(ICustomerService)];
 
         assert.equal(result.length, 3);
-        assert.instanceOf(result[0], NoDependencyCustomerService);
-        assert.instanceOf(result[1], BasicCustomerService);
-        assert.instanceOf(result[2], AdvancedCustomerService);
-        assert.isTrue(result[0].initialized);
-        assert.isTrue(result[1].initialized);
-        assert.isTrue(result[2].initialized);
+        assert.instanceOf(result[0], NoDependencyCustomerService, "NoDependencyCustomerService");
+        assert.instanceOf(result[1], BasicCustomerService, "BasicCustomerService");
+        assert.instanceOf(result[2], AdvancedCustomerService, "AdvancedCustomerService");
+        assert.isTrue(result[0].initialized, "NoDependencyCustomerService");
+        assert.isTrue(result[1].initialized, "BasicCustomerService");
+        assert.isTrue(result[2].initialized, "AdvancedCustomerService");
     });
 
     it("Should try but fail to add multiple service with the same id", async () => {
