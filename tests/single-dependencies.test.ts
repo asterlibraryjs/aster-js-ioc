@@ -1,4 +1,5 @@
 import { assert } from "chai";
+import { isLazyProxy } from "@aster-js/core"
 import { IoCKernel } from "../src";
 import { BasicCustomerService, HttpClient, HttpService, ICustomerService, IHttpService, InjectDependencyCustomerService, IUIService, UIService } from "./service.mocks";
 
@@ -17,6 +18,22 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
 
         assert.instanceOf(result, BasicCustomerService);
         assert.equal(await result.getAddress("Bob"), "Data from /api/customers/Bob");
+    });
+
+    it("Should resolve an existing instance", async () => {
+        const httpService = new HttpService();
+        const { services } = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addInstance(IHttpService, httpService);
+            })
+            .build();
+
+        const result = services.get(IHttpService, true);
+
+        assert.instanceOf(result, HttpService);
+        assert.isTrue(isLazyProxy(result));
+        assert.equal(httpService.id, (<HttpService>result).id);
     });
 
     it("Should resolve a service instance with a dependency without Id", async () => {
@@ -52,7 +69,7 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
         const { services } = IoCKernel.create()
             .configure(services => {
                 services
-                    .addSingleton(UIService, { delayed: true, baseArgs:[0] })
+                    .addSingleton(UIService, { delayed: true, baseArgs: [0] })
                     .addSingleton(BasicCustomerService, { delayed: true })
                     .addSingleton(HttpService);
             })
