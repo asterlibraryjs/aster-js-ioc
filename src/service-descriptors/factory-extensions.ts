@@ -35,7 +35,7 @@ function createServiceFactoryDescriptor(serviceId: ServiceIdentifier, lifetime: 
 
 function tryAddServiceInternal($this: ServiceCollection, lifetime: ServiceLifetime, servicerIdOrCtor: ServiceIdentifier | ServiceFactoryConstructor, ctorOrOptions?: Constructor | ServiceOptions, options?: ServiceOptions): ServiceCollection {
     if (ServiceIdentifier.is(servicerIdOrCtor)) {
-        if($this.has(servicerIdOrCtor))return $this;
+        if ($this.has(servicerIdOrCtor)) return $this;
 
         return $this.add(
             createServiceFactoryDescriptor(servicerIdOrCtor, lifetime, ctorOrOptions as ServiceFactoryConstructor, options ?? {})
@@ -44,7 +44,7 @@ function tryAddServiceInternal($this: ServiceCollection, lifetime: ServiceLifeti
     const serviceId = ServiceFactoryTag.get(servicerIdOrCtor);
     assertServiceFactoryId(serviceId);
 
-    if($this.has(serviceId))return $this;
+    if ($this.has(serviceId)) return $this;
 
     return $this.add(
         createServiceFactoryDescriptor(serviceId, lifetime, servicerIdOrCtor as ServiceFactoryConstructor, ctorOrOptions as ServiceOptions ?? {})

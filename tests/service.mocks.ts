@@ -39,8 +39,13 @@ export class HttpClient extends Initializable {
     }
 }
 
+let instanceId = 0;
+
 @ServiceContract(IHttpService)
 export class HttpService {
+
+    readonly id = ++instanceId;
+
     async get(url: string): Promise<string> {
         return `Data from ${url}`;
     }

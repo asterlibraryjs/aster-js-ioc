@@ -1,15 +1,27 @@
 import { Disposable } from "@aster-js/core";
 
+const ProxyInstance = Symbol();
+
+export function isServiceProxy(proxy: any) {
+    return typeof proxy[ProxyInstance] !== "undefined";
+}
+
+export function isServiceProxyFor(proxy: any, expectedSource: any) {
+    return proxy[ProxyInstance] === expectedSource;
+}
+
 export class ServiceProxy<T = any> extends Disposable implements ProxyHandler<any> {
     private readonly _proxy: T;
+    private readonly _service: T;
     private readonly _revoke: Function;
 
     get proxy(): T { return this._proxy; }
 
-    constructor(value: T) {
+    constructor(service: T) {
         super();
-        const { proxy, revoke } = Proxy.revocable(value, this);
+        const { proxy, revoke } = Proxy.revocable(service, this);
         this._proxy = proxy;
+        this._service = service;
         this._revoke = revoke;
     }
 
@@ -18,6 +30,8 @@ export class ServiceProxy<T = any> extends Disposable implements ProxyHandler<an
     }
 
     get(target: any, p: PropertyKey): any {
+        if (p === ProxyInstance) return this._service;
+
         const value = target[p];
         if (typeof value === "function") {
             return (...args: any[]) => {
