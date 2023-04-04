@@ -2,7 +2,7 @@ import { ServiceCollection } from "../service-collection/service-collection";
 import { IClock, SystemClock } from "./iclock";
 import { IConfiguration, Configuration } from "./iconfiguration";
 
-import { ConsoleLoggerFactory, ILogger, LogLevel } from "./ILogger";
+import { ConsoleLoggerFactory, ILogger, LogLevel } from "./ilogger";
 
 interface IServiceCollectionCoreServicesExtensions {
     /** Add the ConsoleLogger */
