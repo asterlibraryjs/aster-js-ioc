@@ -1,18 +1,20 @@
 import { Constructor, Disposable } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection";
-import { ServiceIdentifier, resolveServiceId } from "../service-registry";
+import { IServiceFactory, ServiceIdentifier, resolveServiceId } from "../service-registry";
 import type { ServiceProvider } from "../service-provider";
 
 import type { IIoCContainerBuilder } from "./iioc-module-builder";
 import type { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
-import type { IIoCModule } from "./iioc-module";
+import { IIoCModule } from "./iioc-module";
 
 export abstract class IoCContainerBuilder extends Disposable implements IIoCContainerBuilder {
     private readonly _services: ServiceCollection;
     private readonly _setups: IoCModuleSetupDelegate[] = [];
 
-    constructor() {
+    constructor(
+        private readonly _name: string
+    ) {
         super();
         this._services = new ServiceCollection();
     }
@@ -68,10 +70,12 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
         const provider = this.createServiceProvider(services);
         this.configureDefaultServices && this.configureDefaultServices(services, provider);
 
-        return this.createModule(provider, [...this._setups]);
+        const module = this.createModule(this._name, provider, [...this._setups]);
+        services.addInstance(IIoCModule, module);
+        return module;
     }
 
-    protected abstract createModule(provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule;
+    protected abstract createModule(name: string, provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule;
 
     protected abstract createServiceProvider(services: ServiceCollection): ServiceProvider;
 
