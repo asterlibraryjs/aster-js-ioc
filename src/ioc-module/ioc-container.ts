@@ -22,6 +22,7 @@ export abstract class IoCContainer extends Disposable implements IIoCModule {
     get ready(): PromiseLike<void> { return this._ready; }
 
     constructor(
+        readonly name: string,
         private readonly _provider: ServiceProvider,
         setupCallbacks: Iterable<IoCModuleSetupDelegate>
     ) {
@@ -32,15 +33,15 @@ export abstract class IoCContainer extends Disposable implements IIoCModule {
     }
 
     createChildScope(name: string): IIoCContainerBuilder {
-        if(this._children.has(name)) throw new Error(`Duplicate child scope "${name}"`);
+        if (this._children.has(name)) throw new Error(`Duplicate child scope "${name}"`);
 
 
         const delayed = new Delayed<IIoCModule>();
         this._children.set(name, delayed);
-        return this.createIoCModuleBuilder(delayed);
+        return this.createIoCModuleBuilder(name, delayed);
     }
 
-    protected abstract createIoCModuleBuilder(target: Delayed<IIoCModule>): IoCModuleBuilder;
+    protected abstract createIoCModuleBuilder(name: string, target: Delayed<IIoCModule>): IoCModuleBuilder;
 
     async start(): Promise<boolean> {
         if (this._token) return false;

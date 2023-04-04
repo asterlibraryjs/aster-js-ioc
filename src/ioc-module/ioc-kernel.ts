@@ -13,19 +13,19 @@ import { IoCModule } from "./ioc-module";
 
 export class IoCKernel extends IoCContainer {
 
-    protected createIoCModuleBuilder(target: Delayed<IIoCModule>): IoCModuleBuilder {
-        return new IoCModuleBuilder(target, this, IoCModule.factory);
+    protected createIoCModuleBuilder(name: string, target: Delayed<IIoCModule>): IoCModuleBuilder {
+        return new IoCModuleBuilder(name, target, this, IoCModule.factory);
     }
 
     static create(): IoCKernelBuilder {
-        return new IoCKernelBuilder();
+        return new IoCKernelBuilder("kernel");
     }
 }
 
 export class IoCKernelBuilder extends IoCContainerBuilder {
 
-    protected createModule(provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule {
-        return new IoCKernel(provider, setups);
+    protected createModule(name: string, provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule {
+        return new IoCKernel(name, provider, setups);
     }
 
     protected createServiceProvider(services: ServiceCollection): ServiceProvider {

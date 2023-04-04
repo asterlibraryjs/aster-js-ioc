@@ -11,15 +11,16 @@ import { IoCContainerBuilder } from "./ioc-container-builder";
 export class IoCModuleBuilder extends IoCContainerBuilder {
 
     constructor(
+        name: string,
         private readonly _result: Delayed<IIoCModule>,
         private readonly _parent: IIoCModule,
         private readonly _factory: IoCModuleFactory
     ) {
-        super();
+        super(name);
     }
 
-    protected createModule(provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule {
-        const result = this._factory(provider, setups, this._parent);
+    protected createModule(name: string, provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule {
+        const result = this._factory(name, provider, setups, this._parent);
         this._result.set(result);
         return result;
     }
