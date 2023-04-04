@@ -1,10 +1,7 @@
 import { assert } from "chai";
-import { IoCKernel, resolveServiceId } from "../src";
-import { ILogger, LogLevel } from "../src/core-services/ilogger";
 import { spy, assert as sassert, SinonSpy } from "sinon";
-import { IClock } from "../src/core-services/iclock";
-import { IConfiguration } from "../src/core-services/iconfiguration";
 import { asserts } from "@aster-js/core";
+import { IoCKernel, resolveServiceId, ILogger, LogLevel, IClock, IConfiguration } from "../src";
 
 class CustomClock implements IClock {
     now(): Date {

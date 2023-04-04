@@ -1,6 +1,6 @@
 import { ServiceCollection } from "../service-collection/service-collection";
-import { SystemClock } from "./iclock";
-import { Configuration } from "./iconfiguration";
+import { IClock, SystemClock } from "./iclock";
+import { IConfiguration, Configuration } from "./iconfiguration";
 
 import { ConsoleLoggerFactory, ILogger, LogLevel } from "./ilogger";
 
@@ -33,3 +33,5 @@ function addConfiguration<T>(this: ServiceCollection, config: T): ServiceCollect
 Object.assign(ServiceCollection.prototype, <IServiceCollectionCoreServicesExtensions>{
     addConsoleLogger, addSystemClock, addConfiguration
 });
+
+export { ILogger, LogLevel, IConfiguration, IClock};
