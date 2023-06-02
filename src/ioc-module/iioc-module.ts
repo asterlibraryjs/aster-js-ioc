@@ -1,11 +1,15 @@
 import { IDisposable } from "@aster-js/core";
 import { AbortToken } from "@aster-js/async";
 
-import { ServiceProvider } from "../service-provider";
+import { IServiceProvider, ServiceProvider } from "../service-provider";
 import { IIoCContainerBuilder } from "./iioc-module-builder";
 import { ServiceIdentifier } from "../service-registry";
 
 export const IIoCModule = ServiceIdentifier<IIoCModule>("IIoCModule");
+
+export interface IIoCModuleSetupAction {
+    exec(provider: IServiceProvider, token?: AbortToken): Promise<void>;
+}
 
 export interface IIoCModule extends IDisposable, Iterable<IIoCModule> {
     readonly name: string;

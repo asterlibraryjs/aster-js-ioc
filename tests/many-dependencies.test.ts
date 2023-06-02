@@ -50,6 +50,33 @@ describe("Dependency Injection with multiple instance of the same service", () =
         assert.isTrue(result[2].initialized, "AdvancedCustomerService");
     });
 
+    it("Should setup many instances of a service type in a submodule", async () => {
+        const kernel = IoCKernel.create().build();
+        await kernel.start();
+        const module = kernel.createChildScope("child")
+            .configure(services => {
+                services
+                    .addSingleton(NoDependencyCustomerService)
+                    .addSingleton(BasicCustomerService)
+                    .addSingleton(HttpService)
+                    .addSingleton(AdvancedCustomerService, { delayed: true }) // Self referencing
+            })
+            .setupMany(ICustomerService, c => c.init())
+            .build();
+
+        await module.start();
+
+        const result = [...module.services.getAll(ICustomerService)];
+
+        assert.equal(result.length, 3);
+        assert.instanceOf(result[0], NoDependencyCustomerService, "NoDependencyCustomerService");
+        assert.instanceOf(result[1], BasicCustomerService, "BasicCustomerService");
+        assert.instanceOf(result[2], AdvancedCustomerService, "AdvancedCustomerService");
+        assert.isTrue(result[0].initialized, "NoDependencyCustomerService");
+        assert.isTrue(result[1].initialized, "BasicCustomerService");
+        assert.isTrue(result[2].initialized, "AdvancedCustomerService");
+    });
+
     it("Should try but fail to add multiple service with the same id", async () => {
         const kernel = IoCKernel.create()
             .configure(services => {

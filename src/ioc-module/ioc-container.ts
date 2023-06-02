@@ -1,14 +1,14 @@
 import { Disposable, IDisposable } from "@aster-js/core";
 import { AbortableToken, AbortToken, Deferred, Delayed } from "@aster-js/async";
 
-import { IServiceAccessor, ServiceProvider } from "../service-provider";
+import type { ServiceProvider } from "../service-provider";
 
-import type { IIoCModule } from "./iioc-module";
-import type { IIoCContainerBuilder, IoCModuleSetupDelegate } from "./iioc-module-builder";
+import type { IIoCModule, IIoCModuleSetupAction } from "./iioc-module";
+import type { IIoCContainerBuilder } from "./iioc-module-builder";
 import type { IoCModuleBuilder } from "./ioc-module-builder";
 
 export abstract class IoCContainer extends Disposable implements IIoCModule {
-    private readonly _setupCallbacks: IoCModuleSetupDelegate[];
+    private readonly _setupCallbacks: IIoCModuleSetupAction[];
     private readonly _children: Map<string, Delayed<IIoCModule>>;
     private readonly _ready: Deferred;
     private _token?: AbortableToken;
@@ -24,7 +24,7 @@ export abstract class IoCContainer extends Disposable implements IIoCModule {
     constructor(
         readonly name: string,
         private readonly _provider: ServiceProvider,
-        setupCallbacks: Iterable<IoCModuleSetupDelegate>
+        setupCallbacks: Iterable<IIoCModuleSetupAction>
     ) {
         super();
         this._children = new Map();
@@ -49,13 +49,11 @@ export abstract class IoCContainer extends Disposable implements IIoCModule {
         const token = AbortToken.create();
         this._token = token;
 
-        const acc = this._provider.get(IServiceAccessor, true);
-
         const setupCallbacks = this._setupCallbacks.splice(0);
         try {
             for (const setup of setupCallbacks) {
                 token.throwIfAborted();
-                await setup(acc, token);
+                await setup.exec(this._provider, token);
             }
             this._ready.resolve();
             return true;

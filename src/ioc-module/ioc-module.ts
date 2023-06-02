@@ -1,12 +1,13 @@
 import type { Delayed } from "@aster-js/async";
-import { ServiceProvider } from "../service-provider";
 
-import type { IIoCModule } from "./iioc-module";
-import type { IoCModuleSetupDelegate } from "./iioc-module-builder";
+import type { ServiceProvider } from "../service-provider/service-provider";
+
 import { IoCContainer } from "./ioc-container";
 import { IoCModuleBuilder } from "./ioc-module-builder";
 
-export type IoCModuleFactory = (name: string, provider: ServiceProvider, setupCallbacks: Iterable<IoCModuleSetupDelegate>, parent: IIoCModule) => IIoCModule;
+import type { IIoCModule, IIoCModuleSetupAction } from "./iioc-module";
+
+export type IoCModuleFactory = (name: string, provider: ServiceProvider, setupCallbacks: Iterable<IIoCModuleSetupAction>, parent: IIoCModule) => IIoCModule;
 
 export class IoCModule extends IoCContainer {
 
@@ -15,7 +16,7 @@ export class IoCModule extends IoCContainer {
     private constructor(
         name: string,
         provider: ServiceProvider,
-        setupCallbacks: Iterable<IoCModuleSetupDelegate>,
+        setupCallbacks: Iterable<IIoCModuleSetupAction>,
         private readonly _parent: IIoCModule
     ) {
         super(name, provider, setupCallbacks);
@@ -25,7 +26,7 @@ export class IoCModule extends IoCContainer {
         return new IoCModuleBuilder(name, target, this, IoCModule.factory);
     }
 
-    static factory(name: string, provider: ServiceProvider, setupCallbacks: Iterable<IoCModuleSetupDelegate>, parent: IIoCModule): IIoCModule {
+    static factory(name: string, provider: ServiceProvider, setupCallbacks: Iterable<IIoCModuleSetupAction>, parent: IIoCModule): IIoCModule {
         return new IoCModule(name, provider, setupCallbacks, parent);
     }
 }

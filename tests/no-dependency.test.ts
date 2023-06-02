@@ -87,8 +87,8 @@ describe("Dependency Injection without Graph", () => {
         const { services } = IoCKernel.create()
             .configure(services => {
                 services
-                .addSingleton(NoDependencyCustomerService)
-                .tryAddSingleton(ICustomerService, NoContractCustomerService)
+                    .addSingleton(NoDependencyCustomerService)
+                    .tryAddSingleton(ICustomerService, NoContractCustomerService)
             })
             .build();
 
@@ -154,6 +154,42 @@ describe("Dependency Injection without Graph", () => {
         assert.isDefined(result.svc);
         assert.instanceOf(result.svc, NoDependencyCustomerService);
         assert.isTrue(result.svc.initialized);
+    });
+
+    it("Should catch an error when setup a service", async () => {
+        const expected = new Error("error");
+        let catchedError: any;
+
+        const kernel = IoCKernel.create()
+            .configure(services => services.addSingleton(NoDependencyCustomerService))
+            .setup(ICustomerService, _ => { throw expected; }).catch(err => (catchedError = err, true))
+            .build();
+
+        await kernel.start();
+
+        assert.equal(catchedError.message, expected.message)
+    });
+
+    it("Should not catch an error when setup a service", async () => {
+        const expected = new Error("error");
+        let observedError: any;
+        let catchedError: any;
+
+        const kernel = IoCKernel.create()
+            .configure(services => services.addSingleton(NoDependencyCustomerService))
+            .setup(ICustomerService, _ => { throw expected; }).catch(err => (observedError = err, false))
+            .build();
+
+        try {
+            await kernel.start();
+            await kernel.ready;
+        }
+        catch (err) {
+            catchedError = err;
+        }
+
+        assert.equal(observedError.message, expected.message);
+        assert.equal(catchedError.message, expected.message);
     });
 
     it("Should throw an error when not enough arguments", () => {
