@@ -1,16 +1,23 @@
 import { Constructor, Disposable } from "@aster-js/core";
 
-import { ServiceCollection } from "../service-collection";
-import { IServiceFactory, ServiceIdentifier, resolveServiceId } from "../service-registry";
+import { ServiceCollection } from "../service-collection/service-collection";
+import {  resolveServiceId } from "../service-registry/service-utilities";
+
+import type { ServiceIdentifier } from "../service-registry";
 import type { ServiceProvider } from "../service-provider";
 
-import type { IIoCContainerBuilder } from "./iioc-module-builder";
+import type { IIoCContainerBuilder, ISetupIoCContainerBuilder } from "./iioc-module-builder";
 import type { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
-import { IIoCModule } from "./iioc-module";
+import { IIoCModule, IIoCModuleSetupAction } from "./iioc-module";
+
+import { IoCModuleCallbackSetupAction, IoCModuleManyServiceSetupAction, IoCModuleServiceSetupAction, SafeIoCModuleSetupAction } from "./setup-actions";
+import { SetupIoCContainerBuilder } from "./setup-ioc-container-builder";
+
+
 
 export abstract class IoCContainerBuilder extends Disposable implements IIoCContainerBuilder {
     private readonly _services: ServiceCollection;
-    private readonly _setups: IoCModuleSetupDelegate[] = [];
+    private readonly _setups: IIoCModuleSetupAction[] = [];
 
     constructor(
         private readonly _name: string
@@ -19,47 +26,41 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
         this._services = new ServiceCollection();
     }
 
-    configure(action: IoCModuleConfigureDelegate): this {
+    configure(action: IoCModuleConfigureDelegate): IIoCContainerBuilder {
         action(this._services);
         return this;
     }
 
-    use(action: IoCModuleSetupDelegate): this {
+    use(action: IoCModuleSetupDelegate): ISetupIoCContainerBuilder {
         this.checkIfDisposed();
 
-        this._setups.push(action);
-        return this;
+        const setupAction = new IoCModuleCallbackSetupAction(action);
+        return this.addSafeSetupAction(setupAction);
     }
 
-    setup<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
-    setup<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, required?: boolean): this;
-    setup<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, required: boolean = true): this {
+    setup<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, required?: boolean): ISetupIoCContainerBuilder;
+    setup<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, required?: boolean): ISetupIoCContainerBuilder;
+    setup<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, required: boolean = true): ISetupIoCContainerBuilder {
         this.checkIfDisposed();
 
         const serviceId = resolveServiceId(serviceIdOrCtor);
-
-        this._setups.push(async acc => {
-            const svc = acc.get<T>(serviceId, required);
-            if (svc) await action(svc);
-        });
-
-        return this;
+        const setupAction = new IoCModuleServiceSetupAction(serviceId, action, required);
+        return this.addSafeSetupAction(setupAction);
     }
 
-    setupMany<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): this;
-    setupMany<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): this;
-    setupMany<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly: boolean = true): this {
+    setupMany<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): ISetupIoCContainerBuilder;
+    setupMany<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): ISetupIoCContainerBuilder;
+    setupMany<T>(serviceIdOrCtor: ServiceIdentifier<T> | Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly: boolean = true): ISetupIoCContainerBuilder {
         this.checkIfDisposed();
 
         const serviceId = resolveServiceId(serviceIdOrCtor);
+        const setupAction = new IoCModuleManyServiceSetupAction(serviceId, action, currentScopeOnly);
+        return this.addSafeSetupAction(setupAction);
+    }
 
-        this._setups.push(async acc => {
-            const services = [...acc.getMany<T>(serviceId, currentScopeOnly)];
-            const all = services.map(x => action(x));
-            await Promise.all(all);
-        });
-
-        return this;
+    private addSafeSetupAction(setupAction: SafeIoCModuleSetupAction): ISetupIoCContainerBuilder {
+        this._setups.push(setupAction);
+        return new SetupIoCContainerBuilder(this, setupAction);
     }
 
     build(): IIoCModule {
@@ -75,7 +76,7 @@ export abstract class IoCContainerBuilder extends Disposable implements IIoCCont
         return module;
     }
 
-    protected abstract createModule(name: string, provider: ServiceProvider, setups: IoCModuleSetupDelegate[]): IIoCModule;
+    protected abstract createModule(name: string, provider: ServiceProvider, setups: IIoCModuleSetupAction[]): IIoCModule;
 
     protected abstract createServiceProvider(services: ServiceCollection): ServiceProvider;
 

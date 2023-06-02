@@ -2,6 +2,7 @@ import { assert } from "chai";
 import { isLazyProxy } from "@aster-js/core"
 import { IoCKernel } from "../src";
 import { BasicCustomerService, HttpClient, HttpService, ICustomerService, IHttpService, InjectDependencyCustomerService, IUIService, UIService } from "./service.mocks";
+import { Iterables } from "@aster-js/iterators";
 
 describe("Dependency Injection with 1 level of graph resolution", () => {
 
@@ -80,7 +81,9 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
         assert.instanceOf(result, UIService);
         assert.instanceOf((result as UIService).customerService, BasicCustomerService);
 
-        const [desc] = services.getOwnDescriptors(IHttpService)
+        const all = services.getOwnDescriptors(IHttpService);
+        const desc = Iterables.first(all)!;
+
         assert.isUndefined(services.getOwnInstance(desc));
 
         await result.render([]);
