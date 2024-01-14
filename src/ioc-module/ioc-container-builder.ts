@@ -1,4 +1,4 @@
-import { Constructor, Disposable } from "@aster-js/core";
+import { Constructor, DisposableHost, Lazy } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection/service-collection";
 import {  resolveServiceId } from "../service-registry/service-utilities";
@@ -13,9 +13,7 @@ import { IIoCModule, IIoCModuleSetupAction } from "./iioc-module";
 import { IoCModuleCallbackSetupAction, IoCModuleManyServiceSetupAction, IoCModuleServiceSetupAction, SafeIoCModuleSetupAction } from "./setup-actions";
 import { SetupIoCContainerBuilder } from "./setup-ioc-container-builder";
 
-
-
-export abstract class IoCContainerBuilder extends Disposable implements IIoCContainerBuilder {
+export abstract class IoCContainerBuilder extends DisposableHost implements IIoCContainerBuilder {
     private readonly _services: ServiceCollection;
     private readonly _setups: IIoCModuleSetupAction[] = [];
 

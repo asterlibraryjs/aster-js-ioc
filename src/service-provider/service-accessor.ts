@@ -1,4 +1,4 @@
-import { Disposable, IDisposable } from "@aster-js/core";
+import { DisposableHost, IDisposable } from "@aster-js/core";
 
 import { ServiceContract, ServiceIdentifier } from "../service-registry";
 
@@ -8,7 +8,7 @@ import { ServiceProxy } from "./service-proxy";
 import { HashMap } from "@aster-js/collections";
 
 @ServiceContract(IServiceAccessor)
-export class ServiceAccessor extends Disposable implements IServiceAccessor {
+export class ServiceAccessor extends DisposableHost implements IServiceAccessor {
     private readonly _proxies: HashMap<any, ServiceProxy>;
 
     constructor(

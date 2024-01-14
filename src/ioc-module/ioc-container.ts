@@ -1,14 +1,14 @@
-import { Disposable, IDisposable } from "@aster-js/core";
-import { AbortableToken, AbortToken, Deferred, Delayed } from "@aster-js/async";
+import { DisposableHost, IDisposable } from "@aster-js/core";
+import { AbortableToken, AbortToken, Deferred, Delayed, assertAllSettledResult } from "@aster-js/async";
 
 import type { ServiceProvider } from "../service-provider";
 
-import type { IIoCModule, IIoCModuleSetupAction } from "./iioc-module";
+import { IIoCModule, IIoCModuleSetupAction, IoCModuleSetupExecBehavior, IoCModuleSetupResultBehavior } from "./iioc-module";
 import type { IIoCContainerBuilder } from "./iioc-module-builder";
 import type { IoCModuleBuilder } from "./ioc-module-builder";
 
-export abstract class IoCContainer extends Disposable implements IIoCModule {
-    private readonly _setupCallbacks: IIoCModuleSetupAction[];
+export abstract class IoCContainer extends DisposableHost implements IIoCModule {
+    private readonly _setups: IIoCModuleSetupAction[];
     private readonly _children: Map<string, Delayed<IIoCModule>>;
     private readonly _ready: Deferred;
     private _token?: AbortableToken;
@@ -24,12 +24,12 @@ export abstract class IoCContainer extends Disposable implements IIoCModule {
     constructor(
         readonly name: string,
         private readonly _provider: ServiceProvider,
-        setupCallbacks: Iterable<IIoCModuleSetupAction>
+        setups: Iterable<IIoCModuleSetupAction>
     ) {
         super();
         this._children = new Map();
         this._ready = new Deferred();
-        this._setupCallbacks = [...setupCallbacks];
+        this._setups = [...setups];
     }
 
     createChildScope(name: string): IIoCContainerBuilder {
@@ -49,12 +49,27 @@ export abstract class IoCContainer extends Disposable implements IIoCModule {
         const token = AbortToken.create();
         this._token = token;
 
-        const setupCallbacks = this._setupCallbacks.splice(0);
+        const setupCallbacks = this._setups.splice(0);
         try {
+            const asyncTasks = [];
+
             for (const setup of setupCallbacks) {
                 token.throwIfAborted();
-                await setup.exec(this._provider, token);
+
+                const task = setup.exec(this._provider, token);
+                if(setup.execBehavior === IoCModuleSetupExecBehavior.asynchronous) {
+                    asyncTasks.push(task);
+                }
+
+                const result = await task;
+                if (result === IoCModuleSetupResultBehavior.stop) break;
             }
+
+            if(asyncTasks.length !== 0){
+                const results = await Promise.allSettled(asyncTasks);
+                assertAllSettledResult(results);
+            }
+
             this._ready.resolve();
             return true;
         }

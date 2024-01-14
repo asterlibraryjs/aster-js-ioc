@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { assert as sassert, spy } from "sinon";
-import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject, Many } from "../src";
+import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject, Many, SetupErrorHandlerResult, ServiceScope } from "../src";
 import { HttpClient, ICustomerService, NoContractCustomerService, NoDependencyCustomerService } from "./service.mocks";
 
 describe("Dependency Injection without Graph", () => {
@@ -156,28 +156,79 @@ describe("Dependency Injection without Graph", () => {
         assert.isTrue(result.svc.initialized);
     });
 
-    it("Should catch an error when setup a service", async () => {
+    it("Should catch an error when setup a service and continue when not specifying behavior", async () => {
         const expected = new Error("error");
         let catchedError: any;
+        let hasContinuedSetup = false;
 
         const kernel = IoCKernel.create()
             .configure(services => services.addSingleton(NoDependencyCustomerService))
-            .setup(ICustomerService, _ => { throw expected; }).catch(err => (catchedError = err, true))
+            .setup(ICustomerService, _ => { throw expected; })
+                .catch(err => {
+                    catchedError = err;
+                })
+            .setup(ICustomerService, _ => hasContinuedSetup = true)
             .build();
 
         await kernel.start();
 
-        assert.equal(catchedError.message, expected.message)
+        assert.equal(catchedError.message, expected.message);
+        assert.isTrue(hasContinuedSetup);
+    });
+
+    it("Should catch an error when setup a service and continue the setup", async () => {
+        const expected = new Error("error");
+        let catchedError: any;
+        let hasContinuedSetup = false;
+
+        const kernel = IoCKernel.create()
+            .configure(services => services.addSingleton(NoDependencyCustomerService))
+            .setup(ICustomerService, _ => { throw expected; })
+            .catch(err => {
+                catchedError = err;
+                return SetupErrorHandlerResult.continue;
+            })
+            .setup(ICustomerService, _ => hasContinuedSetup = true)
+            .build();
+
+        await kernel.start();
+
+        assert.equal(catchedError.message, expected.message);
+        assert.isTrue(hasContinuedSetup);
+    });
+
+    it("Should catch an error when setup a service and stop the whole setup", async () => {
+        const expected = new Error("error");
+        let catchedError: any;
+        let hasContinuedSetup = false;
+
+        const kernel = IoCKernel.create()
+            .configure(services => services.addSingleton(NoDependencyCustomerService))
+            .setup(ICustomerService, _ => { throw expected; })
+                .catch(err => (catchedError = err, SetupErrorHandlerResult.stop))
+            .setup(ICustomerService, _ => hasContinuedSetup = true)
+            .build();
+
+        await kernel.start();
+
+        assert.equal(catchedError.message, expected.message);
+        assert.isFalse(hasContinuedSetup);
     });
 
     it("Should not catch an error when setup a service", async () => {
         const expected = new Error("error");
         let observedError: any;
         let catchedError: any;
+        let hasContinuedSetup = false;
 
         const kernel = IoCKernel.create()
             .configure(services => services.addSingleton(NoDependencyCustomerService))
-            .setup(ICustomerService, _ => { throw expected; }).catch(err => (observedError = err, false))
+            .setup(ICustomerService, _ => { throw expected; })
+                .catch(err => {
+                    observedError = err;
+                    return SetupErrorHandlerResult.throw;
+                })
+            .setup(ICustomerService, _ => hasContinuedSetup = true)
             .build();
 
         try {
@@ -190,6 +241,7 @@ describe("Dependency Injection without Graph", () => {
 
         assert.equal(observedError.message, expected.message);
         assert.equal(catchedError.message, expected.message);
+        assert.isFalse(hasContinuedSetup);
     });
 
     it("Should throw an error when not enough arguments", () => {

@@ -1,4 +1,4 @@
-import { Constructor, Disposable, Tag } from "@aster-js/core";
+import { Constructor, DisposableHost, Tag } from "@aster-js/core";
 
 import { IServiceAccessor } from "../service-provider/iservice-accessor";
 
@@ -24,7 +24,7 @@ export namespace IServiceFactory {
     ): ServiceFactoryConstructor<T> {
 
         @ServiceFactory(serviceId)
-        class CallbackServiceFactory extends Disposable implements IServiceFactory<T> {
+        class CallbackServiceFactory extends DisposableHost implements IServiceFactory<T> {
 
             static readonly targetType = targetType ?? Object as any;
 
