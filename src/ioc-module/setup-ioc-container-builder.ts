@@ -5,7 +5,7 @@ import type { ServiceIdentifier } from "../service-registry/service-identifier";
 import type { IIoCContainerBuilder, ISetupIoCContainerBuilder } from "./iioc-module-builder";
 import type { ServiceSetupDelegate, IoCModuleSetupDelegate, IoCModuleConfigureDelegate } from "./iioc-module-builder";
 import type { IIoCModule } from "./iioc-module";
-import type { SafeIoCModuleSetupAction } from "./setup-actions";
+import type { SafeIoCModuleSetupAction, SetupErrorHandlerDelegate } from "./setup-actions";
 
 export class SetupIoCContainerBuilder implements ISetupIoCContainerBuilder {
 
@@ -14,7 +14,12 @@ export class SetupIoCContainerBuilder implements ISetupIoCContainerBuilder {
         private readonly _action: SafeIoCModuleSetupAction
     ) { }
 
-    catch(errorHandler: (err: any) => boolean): IIoCContainerBuilder {
+    continueWithoutAwaiting(): IIoCContainerBuilder {
+        this._action.continueWithoutAwaiting();
+        return this._wrapped;
+    }
+
+    catch(errorHandler: SetupErrorHandlerDelegate): IIoCContainerBuilder {
         this._action.onError(errorHandler);
         return this._wrapped;
     }

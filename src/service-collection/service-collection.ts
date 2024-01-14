@@ -1,4 +1,4 @@
-import { Disposable, IDisposable } from "@aster-js/core";
+import { DisposableHost, IDisposable } from "@aster-js/core";
 import { Lookup } from "@aster-js/collections";
 
 import { IServiceDescriptor } from "../service-descriptors";
@@ -6,7 +6,7 @@ import { ServiceIdentifier, ServiceIdentityTag } from "../service-registry";
 
 import { IServiceCollection } from "./iservice-collection";
 
-export class ServiceCollection extends Disposable implements IServiceCollection {
+export class ServiceCollection extends DisposableHost implements IServiceCollection {
     private readonly _store: Lookup<ServiceIdentifier, IServiceDescriptor>;
 
     get size(): number { return this._store.size; }

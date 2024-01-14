@@ -1,4 +1,4 @@
-import { Disposable } from "@aster-js/core";
+import { DisposableHost } from "@aster-js/core";
 
 const ProxyInstance = Symbol();
 
@@ -10,7 +10,7 @@ export function isServiceProxyFor(proxy: any, expectedSource: any) {
     return proxy[ProxyInstance] === expectedSource;
 }
 
-export class ServiceProxy<T = any> extends Disposable implements ProxyHandler<any> {
+export class ServiceProxy<T = any> extends DisposableHost implements ProxyHandler<any> {
     private readonly _proxy: T;
     private readonly _service: T;
     private readonly _revoke: Function;

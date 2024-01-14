@@ -1,4 +1,5 @@
 export * from "./iioc-module";
+export * from "./setup-actions";
 export * from "./iioc-module-builder";
 export * from "./ioc-container-builder";
 export * from "./ioc-module";
