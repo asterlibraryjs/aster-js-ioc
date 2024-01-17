@@ -58,7 +58,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
                 token.throwIfAborted();
 
                 const task = setup.exec(this._provider, token);
-                if(setup.execBehavior === IoCModuleSetupExecBehavior.asynchronous) {
+                if (setup.execBehavior === IoCModuleSetupExecBehavior.asynchronous) {
                     asyncTasks.push(task);
                 }
 
@@ -66,7 +66,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
                 if (result === IoCModuleSetupResultBehavior.stop) break;
             }
 
-            if(asyncTasks.length !== 0){
+            if (asyncTasks.length !== 0) {
                 const results = await Promise.allSettled(asyncTasks);
                 assertAllSettledResult(results);
             }

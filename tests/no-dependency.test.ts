@@ -164,9 +164,9 @@ describe("Dependency Injection without Graph", () => {
         const kernel = IoCKernel.create()
             .configure(services => services.addSingleton(NoDependencyCustomerService))
             .setup(ICustomerService, _ => { throw expected; })
-                .catch(err => {
-                    catchedError = err;
-                })
+            .catch(err => {
+                catchedError = err;
+            })
             .setup(ICustomerService, _ => hasContinuedSetup = true)
             .build();
 
@@ -205,7 +205,7 @@ describe("Dependency Injection without Graph", () => {
         const kernel = IoCKernel.create()
             .configure(services => services.addSingleton(NoDependencyCustomerService))
             .setup(ICustomerService, _ => { throw expected; })
-                .catch(err => (catchedError = err, SetupErrorHandlerResult.stop))
+            .catch(err => (catchedError = err, SetupErrorHandlerResult.stop))
             .setup(ICustomerService, _ => hasContinuedSetup = true)
             .build();
 
@@ -224,10 +224,10 @@ describe("Dependency Injection without Graph", () => {
         const kernel = IoCKernel.create()
             .configure(services => services.addSingleton(NoDependencyCustomerService))
             .setup(ICustomerService, _ => { throw expected; })
-                .catch(err => {
-                    observedError = err;
-                    return SetupErrorHandlerResult.throw;
-                })
+            .catch(err => {
+                observedError = err;
+                return SetupErrorHandlerResult.throw;
+            })
             .setup(ICustomerService, _ => hasContinuedSetup = true)
             .build();
 
@@ -334,6 +334,37 @@ describe("Dependency Injection without Graph", () => {
 
         assert.instanceOf(result, NoDependencyCustomerService);
         assert.equal(await result!.getAddress("bo"), "Hello bo !");
+    });
+
+    it("Should keep scoped in their container", async () => {
+        const kernel = IoCKernel.create()
+            .configure(services => {
+                services.addScoped(NoDependencyCustomerService, { scope: ServiceScope.container })
+            })
+            .build();
+
+        const scopedInstance = new NoDependencyCustomerService();
+        scopedInstance.init();
+
+        const childModule = kernel.createChildScope("child")
+            .configure(services => {
+                const ctor = IServiceFactory.create(ICustomerService, _ => scopedInstance)
+                services.addScopedFactory(ctor, { scope: ServiceScope.container })
+            })
+            .build();
+
+        const deepChildModule = kernel.createChildScope("deep-child").build();
+
+        const kernelResult = [...kernel.services.getAll(ICustomerService)];
+        assert.equal(kernelResult.length, 1);
+        assert.isFalse(kernelResult[0].initialized);
+
+        const childResult = [...childModule.services.getAll(ICustomerService)];
+        assert.equal(childResult.length, 1);
+        assert.isTrue(childResult[0].initialized);
+
+        const deepResult = [...deepChildModule.services.getAll(ICustomerService)];
+        assert.equal(deepResult.length, 0);
     });
 
     it("Should create a child module", () => {
