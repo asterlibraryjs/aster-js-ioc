@@ -15,7 +15,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
 
     get abortToken(): AbortToken { return this._token?.readOnly ?? AbortToken.none; }
 
-    get running(): boolean { return !this._token?.aborted; }
+    get running(): boolean { return this._token ? !this._token.aborted : false; }
 
     get services(): ServiceProvider { return this._provider; }
 
@@ -27,6 +27,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
         setups: Iterable<IIoCModuleSetupAction>
     ) {
         super();
+
         this._children = new Map();
         this._ready = new Deferred();
         this._setups = [...setups];
