@@ -1,4 +1,4 @@
-import { DisposableHost, IDisposable } from "@aster-js/core";
+import { DisposableHost, IDisposable, Lazy } from "@aster-js/core";
 import { AbortableToken, AbortToken, Deferred, Delayed, assertAllSettledResult } from "@aster-js/async";
 
 import type { ServiceProvider } from "../service-provider";
@@ -6,12 +6,24 @@ import type { ServiceProvider } from "../service-provider";
 import { IIoCModule, IIoCModuleSetupAction, IoCModuleSetupExecBehavior, IoCModuleSetupResultBehavior } from "./iioc-module";
 import type { IIoCContainerBuilder } from "./iioc-module-builder";
 import type { IoCModuleBuilder } from "./ioc-module-builder";
+import { Memoize } from "@aster-js/decorators";
+
+function* resolvePathSegments(target: IIoCModule): Iterable<string> {
+    let current: IIoCModule | undefined = target;
+    while (current) {
+        yield current.name;
+        current = current.parent;
+    }
+}
 
 export abstract class IoCContainer extends DisposableHost implements IIoCModule {
     private readonly _setups: IIoCModuleSetupAction[];
     private readonly _children: Map<string, Delayed<IIoCModule>>;
     private readonly _ready: Deferred<this>;
     private _token?: AbortableToken;
+
+    @Memoize
+    get path(): string { return [...resolvePathSegments(this)].reverse().join("/"); }
 
     get abortToken(): AbortToken { return this._token?.readOnly ?? AbortToken.none; }
 
@@ -27,7 +39,6 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
         setups: Iterable<IIoCModuleSetupAction>
     ) {
         super();
-
         this._children = new Map();
         this._ready = new Deferred();
         this._setups = [...setups];
@@ -83,9 +94,9 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
         }
     }
 
-    *[Symbol.iterator](): IterableIterator<IIoCModule> {
+    async *[Symbol.asyncIterator](): AsyncIterableIterator<IIoCModule> {
         for (const child of this._children.values()) {
-            if (child.has()) yield child.get() as IIoCModule;
+            yield await child.get();
         }
     }
 

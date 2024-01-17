@@ -1,12 +1,29 @@
-import { Constructor } from "@aster-js/core";
-import { IServiceFactory, ServiceFactory, ServiceIdentifier } from "../service-registry";
+import { Many, ServiceContract, ServiceIdentifier } from "../service-registry";
 import { IClock } from "./iclock";
 import { IIoCModule } from "../ioc-module";
 
 export const ILogger = ServiceIdentifier<ILogger>("ILogger");
-
 export interface ILogger {
-    log(level: LogLevel, message: string, err?: any): void;
+    log(logLevel: LogLevel, message: string, err?: unknown): void;
+    trace(message: string): void;
+    debug(message: string): void;
+    info(message: string): void;
+    warn(message: string, err?: any): void;
+    error(message: string, err?: any): void;
+    critical(message: string, err?: any): void;
+}
+
+export type LogEvent = {
+    readonly scope: string;
+    readonly logLevel: LogLevel;
+    readonly message: string;
+    readonly time: Date;
+    readonly err?: unknown;
+}
+
+export const ILoggerSink = ServiceIdentifier<ILoggerSink>("ILoggerSink");
+export interface ILoggerSink {
+    log(event: LogEvent): void;
     isEnabled(logLevel: LogLevel): boolean;
 }
 
@@ -19,6 +36,51 @@ export const enum LogLevel {
     critical
 }
 
+@ServiceContract(ILogger)
+export class DefaultLogger {
+    constructor(
+        @IIoCModule private readonly _iocModule: IIoCModule,
+        @IClock private readonly _clock: IClock,
+        @Many(ILoggerSink) private readonly _sinks: ILoggerSink[]
+    ) { }
+
+    log(logLevel: LogLevel, message: string, err?: unknown): void {
+        const event = {
+            scope: this._iocModule.path,
+            time: this._clock.utcNow(),
+            logLevel,
+            message,
+            err
+        } as LogEvent;
+
+        for (const sink of this._sinks) sink.log(event);
+    }
+
+    trace(message: string): void {
+        this.log(LogLevel.trace, message);
+    }
+
+    debug(message: string): void {
+        this.log(LogLevel.debug, message);
+    }
+
+    info(message: string): void {
+        this.log(LogLevel.info, message);
+    }
+
+    warn(message: string, err?: any): void {
+        this.log(LogLevel.warn, message, err);
+    }
+
+    error(message: string, err?: any): void {
+        this.log(LogLevel.error, message, err);
+    }
+
+    critical(message: string, err?: any): void {
+        this.log(LogLevel.critical, message, err);
+    }
+}
+
 const DateFormat = new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
     minute: "2-digit",
@@ -27,33 +89,36 @@ const DateFormat = new Intl.DateTimeFormat("en-US", {
     fractionalSecondDigits: 3
 });
 
-class ConsoleLogger implements ILogger {
+
+@ServiceContract(ILoggerSink)
+export class ConsoleLoggerSink implements ILoggerSink {
     constructor(
-        private readonly _name: string,
-        private _level: LogLevel,
-        @IClock private readonly _clock: IClock
+        private _level: LogLevel
     ) { }
 
-    log(logLevel: LogLevel, message: string, err?: any): void {
+    log({ scope, time, logLevel, message, err }: LogEvent): void {
         if (this.isEnabled(logLevel)) {
-            const time = DateFormat.format(this._clock.now());
-            const log = `[${this._name}] [${time}] ${message}`;
+            const formatedTime = DateFormat.format(time);
+            const log = `[${formatedTime}] [${scope}] ${message}`;
+
+            const args: any[] = [log];
+            if (err) args.push(err);
             switch (logLevel) {
                 case LogLevel.trace:
-                    console.trace(log);
+                    console.trace(...args);
                     break;
                 case LogLevel.debug:
-                    console.debug(log);
+                    console.debug(...args);
                     break;
                 case LogLevel.info:
-                    console.info(log);
+                    console.info(...args);
                     break;
                 case LogLevel.warn:
-                    console.warn(log);
+                    console.warn(...args);
                     break;
                 case LogLevel.error:
                 case LogLevel.critical:
-                    console.error(log);
+                    console.error(...args);
                     break;
                 default:
                     console.log(message);
@@ -65,20 +130,4 @@ class ConsoleLogger implements ILogger {
     isEnabled(logLevel: LogLevel): boolean {
         return logLevel >= this._level;
     }
-}
-
-@ServiceFactory(ILogger)
-export class ConsoleLoggerFactory implements IServiceFactory {
-    static readonly targetType: Constructor = ConsoleLogger;
-
-    constructor(
-        private readonly _level: LogLevel,
-        @IIoCModule private readonly _module: IIoCModule,
-        @IClock private readonly _clock: IClock){
-
-    }
-
-    create(): any {
-        return new ConsoleLogger(this._module.name, this._level, this._clock )
-     }
 }

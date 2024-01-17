@@ -52,10 +52,10 @@ describe("Core Services", () => {
             .build();
 
         const result = services.get(ILogger, true);
-        result.log(LogLevel.warn, "Hello !!");
+        result.warn("Hello !!");
 
         sassert.calledOnce(warnSpy);
-        sassert.calledWithExactly(warnSpy, "[kernel] [12:00:00.000] Hello !!");
+        sassert.calledWithExactly(warnSpy, "[12:00:00.000] [root] Hello !!");
     });
 
     it("Should not log a info in the console", async () => {

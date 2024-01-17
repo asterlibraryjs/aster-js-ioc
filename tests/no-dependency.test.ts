@@ -353,7 +353,7 @@ describe("Dependency Injection without Graph", () => {
             })
             .build();
 
-        const deepChildModule = kernel.createChildScope("deep-child").build();
+        const deepChildModule = childModule.createChildScope("deep-child").build();
 
         const kernelResult = [...kernel.services.getAll(ICustomerService)];
         assert.equal(kernelResult.length, 1);
@@ -365,6 +365,20 @@ describe("Dependency Injection without Graph", () => {
 
         const deepResult = [...deepChildModule.services.getAll(ICustomerService)];
         assert.equal(deepResult.length, 0);
+    });
+
+    it("Should compute proper path", async () => {
+        const kernel = IoCKernel.create().build();
+        assert.equal("root", kernel.name);
+        assert.equal("root", kernel.path);
+
+        const childModule = kernel.createChildScope("child").build();
+        assert.equal("child", childModule.name);
+        assert.equal("root/child", childModule.path);
+
+        const deepChildModule = childModule.createChildScope("deep-child").build();
+        assert.equal("deep-child", deepChildModule.name);
+        assert.equal("root/child/deep-child", deepChildModule.path);
     });
 
     it("Should create a child module", () => {

@@ -19,7 +19,7 @@ export class IoCKernel extends IoCContainer {
     }
 
     static create(): IoCKernelBuilder {
-        return new IoCKernelBuilder("kernel");
+        return new IoCKernelBuilder("root");
     }
 }
 
