@@ -46,7 +46,6 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
     async start(): Promise<boolean> {
         if (this._token) return false;
 
-
         const token = AbortToken.create();
         this._token = token;
 
@@ -78,6 +77,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
         }
         catch (err) {
             token.abort(err);
+
             this._ready.reject(err);
             return false;
         }
