@@ -128,7 +128,17 @@ export class ServiceProvider implements IServiceProvider {
         }
         else {
             for (const provider of this._dependencyResolver.resolveProviders(serviceId)) {
-                yield* provider.getAll(serviceId, true);
+                if (provider === this) {
+                    const descriptors = this._services.get(serviceId);
+                    yield* this.fetchOrCreateOwnInstances(descriptors);
+                }
+                else {
+                    const descriptors = Iterables.filter(
+                        this._services.get(serviceId),
+                        x => (x.scope & ServiceScope.children) === ServiceScope.children
+                    );
+                    yield* this.fetchOrCreateOwnInstances(descriptors);
+                }
             }
         }
     }
