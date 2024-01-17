@@ -10,7 +10,7 @@ import type { IoCModuleBuilder } from "./ioc-module-builder";
 export abstract class IoCContainer extends DisposableHost implements IIoCModule {
     private readonly _setups: IIoCModuleSetupAction[];
     private readonly _children: Map<string, Delayed<IIoCModule>>;
-    private readonly _ready: Deferred;
+    private readonly _ready: Deferred<this>;
     private _token?: AbortableToken;
 
     get abortToken(): AbortToken { return this._token?.readOnly ?? AbortToken.none; }
@@ -19,7 +19,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
 
     get services(): ServiceProvider { return this._provider; }
 
-    get ready(): PromiseLike<void> { return this._ready; }
+    get ready(): PromiseLike<this> { return this._ready; }
 
     constructor(
         readonly name: string,
@@ -36,7 +36,6 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
     createChildScope(name: string): IIoCContainerBuilder {
         if (this._children.has(name)) throw new Error(`Duplicate child scope "${name}"`);
 
-
         const delayed = new Delayed<IIoCModule>();
         this._children.set(name, delayed);
         return this.createIoCModuleBuilder(name, delayed);
@@ -47,23 +46,26 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
     async start(): Promise<boolean> {
         if (this._token) return false;
 
+
         const token = AbortToken.create();
         this._token = token;
 
-        const setupCallbacks = this._setups.splice(0);
+        const setups = this._setups.splice(0);
         try {
             const asyncTasks = [];
 
-            for (const setup of setupCallbacks) {
+            for (const setup of setups) {
                 token.throwIfAborted();
 
                 const task = setup.exec(this._provider, token);
+
                 if (setup.execBehavior === IoCModuleSetupExecBehavior.asynchronous) {
                     asyncTasks.push(task);
                 }
-
-                const result = await task;
-                if (result === IoCModuleSetupResultBehavior.stop) break;
+                else {
+                    const taskResult = await task;
+                    if (taskResult === IoCModuleSetupResultBehavior.stop) break;
+                }
             }
 
             if (asyncTasks.length !== 0) {
@@ -71,7 +73,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
                 assertAllSettledResult(results);
             }
 
-            this._ready.resolve();
+            this._ready.resolve(this);
             return true;
         }
         catch (err) {

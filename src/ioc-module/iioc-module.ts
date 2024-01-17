@@ -36,7 +36,7 @@ export interface IIoCModule extends IDisposable, Iterable<IIoCModule> {
 
     readonly running: boolean;
 
-    readonly ready: PromiseLike<void>;
+    readonly ready: PromiseLike<this>;
 
     readonly abortToken: AbortToken;
 
