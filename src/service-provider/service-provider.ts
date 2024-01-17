@@ -1,4 +1,4 @@
-import { Constructor } from "@aster-js/core";
+import { Constructor, IDisposable } from "@aster-js/core";
 import { Iterables } from "@aster-js/iterators";
 
 import { ServiceIdentifier, ServiceContract, isAllowedScope } from "../service-registry";
@@ -12,7 +12,7 @@ import { InstantiationService } from "./instantiation-service";
 import { DependencyResolver } from "./dependency-resolver";
 
 @ServiceContract(IServiceProvider)
-export class ServiceProvider implements IServiceProvider {
+export class ServiceProvider implements IServiceProvider, IDisposable {
     private readonly _instances: Map<IServiceDescriptor, any>;
     private readonly _dependencyResolver: IDependencyResolver;
     private readonly _instanciationService: IInstantiationService;
@@ -161,5 +161,12 @@ export class ServiceProvider implements IServiceProvider {
             const instance = this.fetchOrCreateOwnInstance(descriptor, false, true);
             if (typeof instance !== "undefined") yield instance;
         }
+    }
+
+    [Symbol.dispose](): void {
+        const instances = [...this._instances.values()];
+        this._instances.clear();
+
+        IDisposable.safeDisposeAll(instances);
     }
 }
