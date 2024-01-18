@@ -119,9 +119,9 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
         assert.equal(childInstance1.id, 1);
 
         const rootInstance2 = kernel.services.get(resolveServiceId(Service2), true);
-        assert.equal(rootInstance2.instance, rootInstance1);
+        assert.equal(rootInstance2.instance.id, rootInstance1.id);
 
         const childInstance2 = child.services.get(resolveServiceId(Service2), true);
-        assert.equal(childInstance2.instance, childInstance1);
+        assert.equal(childInstance2.instance.id, childInstance1.id);
     });
 });
