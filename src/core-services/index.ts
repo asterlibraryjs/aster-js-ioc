@@ -1,8 +1,9 @@
+import { ServiceScope } from "src/service-descriptors";
 import { ServiceCollection } from "../service-collection/service-collection";
 import { IClock, SystemClock } from "./iclock";
 import { IConfiguration, Configuration } from "./iconfiguration";
 
-import { ConsoleLoggerFactory, ILogger, LogLevel } from "./ilogger";
+import { DefaultLogger, ConsoleLoggerSink, ILogger, ILoggerSink, LogEvent, LogLevel } from "./ilogger";
 
 interface IServiceCollectionCoreServicesExtensions {
     /** Add the ConsoleLogger */
@@ -18,8 +19,10 @@ declare module "../service-collection/service-collection" {
 }
 
 function addConsoleLogger(this: ServiceCollection, level: LogLevel): ServiceCollection {
-    this.tryAddSingleton(SystemClock);
-    return this.addTransientFactory(ConsoleLoggerFactory, { baseArgs: [level] });
+    return this
+        .addSystemClock()
+        .addSingleton(ConsoleLoggerSink, { baseArgs: [level] })
+        .addScoped(DefaultLogger);
 }
 
 function addSystemClock(this: ServiceCollection): ServiceCollection {
@@ -34,4 +37,4 @@ Object.assign(ServiceCollection.prototype, <IServiceCollectionCoreServicesExtens
     addConsoleLogger, addSystemClock, addConfiguration
 });
 
-export { ILogger, LogLevel, IConfiguration, IClock};
+export { DefaultLogger, ConsoleLoggerSink, ILogger, ILoggerSink, LogEvent, LogLevel, IConfiguration, IClock };
