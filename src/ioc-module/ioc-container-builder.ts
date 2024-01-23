@@ -1,7 +1,7 @@
 import { Constructor, DisposableHost, Lazy } from "@aster-js/core";
 
 import { ServiceCollection } from "../service-collection/service-collection";
-import {  resolveServiceId } from "../service-registry/service-utilities";
+import { resolveServiceId } from "../service-registry/service-utilities";
 
 import type { ServiceIdentifier } from "../service-registry";
 import type { ServiceProvider } from "../service-provider";
@@ -12,16 +12,22 @@ import { IIoCModule, IIoCModuleSetupAction } from "./iioc-module";
 
 import { IoCModuleCallbackSetupAction, IoCModuleManyServiceSetupAction, IoCModuleServiceSetupAction, SafeIoCModuleSetupAction } from "./setup-actions";
 import { SetupIoCContainerBuilder } from "./setup-ioc-container-builder";
+import { IServiceCollection } from "../service-collection";
 
 export abstract class IoCContainerBuilder extends DisposableHost implements IIoCContainerBuilder {
-    private readonly _services: ServiceCollection;
+    private readonly _services: IServiceCollection;
     private readonly _setups: IIoCModuleSetupAction[] = [];
 
     constructor(
         private readonly _name: string
     ) {
         super();
-        this._services = new ServiceCollection();
+        this._services = this.createServiceCollection();
+    }
+
+    /** Creates the service collection used to store all services */
+    protected createServiceCollection(): IServiceCollection {
+        return new ServiceCollection();
     }
 
     configure(action: IoCModuleConfigureDelegate): IIoCContainerBuilder {

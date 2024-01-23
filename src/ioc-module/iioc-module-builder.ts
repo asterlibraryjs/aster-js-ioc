@@ -2,7 +2,7 @@ import { AbortToken } from "@aster-js/async";
 import { Constructor } from "@aster-js/core";
 
 import { IServiceAccessor } from "../service-provider/iservice-accessor";
-import { ServiceCollection } from "../service-collection";
+import { IServiceCollection } from "../service-collection";
 import { ServiceIdentifier } from "../service-registry";
 
 import { IIoCModule } from "./iioc-module";
@@ -10,7 +10,7 @@ import { SetupErrorHandlerDelegate } from "./setup-actions";
 
 export type ServiceSetupDelegate<T = any> = (svc: T, token?: AbortToken) => any;
 
-export type IoCModuleConfigureDelegate = (services: ServiceCollection) => void;
+export type IoCModuleConfigureDelegate = (services: IServiceCollection) => void;
 
 export type IoCModuleSetupDelegate = (serviceAccessor: IServiceAccessor, token?: AbortToken) => Promise<void>;
 
@@ -28,6 +28,7 @@ export interface IIoCContainerBuilder {
     setupMany<T>(serviceId: ServiceIdentifier<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): ISetupIoCContainerBuilder;
     /** Add a setup action to execute at the start of the application over many services with the same identifier */
     setupMany<T>(ctor: Constructor<T>, action: ServiceSetupDelegate<T>, currentScopeOnly?: boolean): ISetupIoCContainerBuilder;
+    /** Build a new container using the registered services and setups */
     build(): IIoCModule;
 }
 
