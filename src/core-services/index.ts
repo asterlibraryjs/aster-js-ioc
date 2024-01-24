@@ -22,11 +22,11 @@ function addConsoleLogger(this: ServiceCollection, level: LogLevel): ServiceColl
     return this
         .addSystemClock()
         .addSingleton(ConsoleLoggerSink, { baseArgs: [level] })
-        .addScoped(DefaultLogger);
+        .tryAddScoped(DefaultLogger);
 }
 
 function addSystemClock(this: ServiceCollection): ServiceCollection {
-    return this.addSingleton(SystemClock);
+    return this.tryAddSingleton(SystemClock);
 }
 
 function addConfiguration<T>(this: ServiceCollection, config: T): ServiceCollection {

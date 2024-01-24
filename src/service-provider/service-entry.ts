@@ -1,14 +1,14 @@
 import { Tags } from "@aster-js/core";
 import { IServiceDescriptor } from "../service-descriptors";
 import { DependencyParameter } from "../service-registry";
-import { InstanciationContext } from "./instanciation-context";
+import { InstantiationContext } from "./instantiation-context";
 
 import { ServiceProvider } from "./service-provider";
 
 export interface IServiceDependency {
     readonly param: DependencyParameter;
 
-    resolveArg(ctx?: InstanciationContext): any;
+    resolveArg(ctx?: InstantiationContext): any;
 
     entries(): Iterable<ServiceEntry>;
 }

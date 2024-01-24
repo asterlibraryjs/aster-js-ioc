@@ -1,7 +1,7 @@
 import { HashMap } from "@aster-js/collections";
 import { ServiceEntry } from "./service-entry";
 
-export class InstanciationContext {
+export class InstantiationContext {
     private readonly _instances: HashMap<ServiceEntry, any>;
 
     constructor(

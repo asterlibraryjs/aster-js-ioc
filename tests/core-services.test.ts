@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { spy, assert as sassert, SinonSpy } from "sinon";
+import { spy, assert as sassert, SinonSpy, match } from "sinon";
 import { asserts } from "@aster-js/core";
 import { IoCKernel, resolveServiceId, ILogger, LogLevel, IClock, IConfiguration } from "../src";
 
@@ -52,10 +52,10 @@ describe("Core Services", () => {
             .build();
 
         const result = services.get(ILogger, true);
-        result.warn("Hello !!");
+        result.warn(null, "Hello {Name}!!", "Les Petits");
 
         sassert.calledOnce(warnSpy);
-        sassert.calledWithExactly(warnSpy, "[12:00:00.000] [root] Hello !!");
+        sassert.calledWith(warnSpy, "[12:00:00.000] [root] Hello Les Petits!!", match({ "Name": "Les Petits" }));
     });
 
     it("Should not log a info in the console", async () => {
@@ -67,7 +67,7 @@ describe("Core Services", () => {
             .build();
 
         const result = services.get(ILogger, true);
-        result.log(LogLevel.info, "Hello !!");
+        result.log(LogLevel.info, null, "Hello !!");
 
         sassert.notCalled(warnSpy);
     });
