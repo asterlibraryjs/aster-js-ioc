@@ -4,19 +4,60 @@ import { IIoCModule } from "../ioc-module";
 
 export const ILogger = ServiceIdentifier<ILogger>("ILogger");
 export interface ILogger {
-    log(logLevel: LogLevel, message: string, err?: unknown): void;
-    trace(message: string): void;
-    debug(message: string): void;
-    info(message: string): void;
-    warn(message: string, err?: any): void;
-    error(message: string, err?: any): void;
-    critical(message: string, err?: any): void;
+    /**
+     * Log an event and propagate it over all registered sinks
+     * @param logLevel Define the log level
+     * @param err Error related to the event. Set as null when not relevant
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    log(logLevel: LogLevel, err: unknown, templateMessage: string, ...params: any[]): void;
+    /**
+     * Log an event with a Log Level at `trace`
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    trace(templateMessage: string, ...params: any[]): void;
+    /**
+     * Log an event with a Log Level at `debug`
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    debug(templateMessage: string, ...params: any[]): void;
+    /**
+     * Log an event with a Log Level at `info`
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    info(templateMessage: string, ...params: any[]): void;
+    /**
+     * Log an event with a Log Level at `warn`
+     * @param err Error related to the event. Set as null when not relevant
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    warn(err: unknown, templateMessage: string, ...params: any[]): void;
+    /**
+     * Log an event with a Log Level at `error`
+     * @param err Error related to the event. Set as null when not relevant
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    error(err: unknown, templateMessage: string, ...params: any[]): void;
+    /**
+     * Log an event with a Log Level at `critical`
+     * @param err Error related to the event. Set as null when not relevant
+     * @param templateMessage Template message that embed into curly braces each following params like this "My message with {MyParam1} and {MyParam2}"
+     * @param params Params to inject into the message. Each parameter must be declared only once in order of their apperance in the template message
+     */
+    critical(err: unknown, templateMessage: string, ...params: any[]): void;
 }
 
 export type LogEvent = {
     readonly scope: string;
     readonly logLevel: LogLevel;
     readonly message: string;
+    readonly properties: Record<string, any>;
     readonly time: Date;
     readonly err?: unknown;
 }
@@ -44,40 +85,53 @@ export class DefaultLogger {
         @Many(ILoggerSink) private readonly _sinks: ILoggerSink[]
     ) { }
 
-    log(logLevel: LogLevel, message: string, err?: unknown): void {
-        const event = {
+    log(logLevel: LogLevel, err: unknown, templateMessage: string, ...params: any[]): void {
+        const properties: Record<string, any> = {};
+        const message = templateMessage.replaceAll(/\{([\w]+)\}/gi, (original, key) => {
+            if (properties.hasOwnProperty(key)) {
+                return properties[key];
+            }
+            if (params.length !== 0) {
+                const result = params.shift();
+                properties[key] = result;
+                return result;
+            }
+            return original;
+        });
+        const event: LogEvent = {
             scope: this._iocModule.path,
             time: this._clock.utcNow(),
             logLevel,
             message,
+            properties,
             err
-        } as LogEvent;
+        };
 
         for (const sink of this._sinks) sink.log(event);
     }
 
-    trace(message: string): void {
-        this.log(LogLevel.trace, message);
+    trace(templateMessage: string, ...params: any[]): void {
+        this.log(LogLevel.trace, null, templateMessage, ...params);
     }
 
-    debug(message: string): void {
-        this.log(LogLevel.debug, message);
+    debug(templateMessage: string, ...params: any[]): void {
+        this.log(LogLevel.debug, null, templateMessage, ...params);
     }
 
-    info(message: string): void {
-        this.log(LogLevel.info, message);
+    info(templateMessage: string, ...params: any[]): void {
+        this.log(LogLevel.info, null, templateMessage, ...params);
     }
 
-    warn(message: string, err?: any): void {
-        this.log(LogLevel.warn, message, err);
+    warn(err: unknown, templateMessage: string, ...params: any[]): void {
+        this.log(LogLevel.warn, err, templateMessage, ...params);
     }
 
-    error(message: string, err?: any): void {
-        this.log(LogLevel.error, message, err);
+    error(err: unknown, templateMessage: string, ...params: any[]): void {
+        this.log(LogLevel.error, err, templateMessage, ...params);
     }
 
-    critical(message: string, err?: any): void {
-        this.log(LogLevel.critical, message, err);
+    critical(err: unknown, templateMessage: string, ...params: any[]): void {
+        this.log(LogLevel.critical, err, templateMessage, ...params);
     }
 }
 
@@ -96,13 +150,14 @@ export class ConsoleLoggerSink implements ILoggerSink {
         private _level: LogLevel
     ) { }
 
-    log({ scope, time, logLevel, message, err }: LogEvent): void {
+    log({ scope, time, logLevel, message, err, properties }: LogEvent): void {
         if (this.isEnabled(logLevel)) {
             const formatedTime = DateFormat.format(time);
             const log = `[${formatedTime}] [${scope}] ${message}`;
 
-            const args: any[] = [log];
+            const args: any[] = [log, properties];
             if (err) args.push(err);
+
             switch (logLevel) {
                 case LogLevel.trace:
                     console.trace(...args);

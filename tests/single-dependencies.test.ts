@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { isLazyProxy } from "@aster-js/core"
-import { IServiceFactory, Inject, IoCKernel, resolveServiceId } from "../src";
+import { IServiceFactory, Inject, IoCKernel, resolveServiceId, InstantiationError } from "../src";
 import { BasicCustomerService, HttpClient, HttpService, ICustomerService, IHttpService, InjectDependencyCustomerService, IUIService, UIService } from "./service.mocks";
 import { Iterables } from "@aster-js/iterators";
 
@@ -19,6 +19,24 @@ describe("Dependency Injection with 1 level of graph resolution", () => {
 
         assert.instanceOf(result, BasicCustomerService);
         assert.equal(await result.getAddress("Bob"), "Data from /api/customers/Bob");
+    });
+
+    it("Should throw a proper error when a dependency cra#sh", async () => {
+        class B {
+            constructor() { throw new Error(); }
+        }
+        class A {
+            constructor(@Inject(B) readonly b: B) { }
+        }
+        const { services } = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addSingleton(A)
+                    .addSingleton(B);
+            })
+            .build();
+
+        assert.throw(() => services.get(resolveServiceId(A), true), InstantiationError);
     });
 
     it("Should resolve an existing instance", async () => {

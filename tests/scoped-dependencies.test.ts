@@ -1,6 +1,6 @@
 import { assert } from "chai";
 import { IoCKernel, ServiceScope } from "../src";
-import { BasicCustomerService, ICustomerService, NoDependencyCustomerService, HttpService, AdvancedCustomerService } from "./service.mocks";
+import { BasicCustomerService, ICustomerService, HttpService } from "./service.mocks";
 
 describe("Scopes", () => {
 

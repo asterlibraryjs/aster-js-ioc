@@ -1,5 +1,5 @@
 import { DependencyParameter } from "../service-registry";
-import { InstanciationContext } from "./instanciation-context";
+import { InstantiationContext } from "./instantiation-context";
 
 import { IServiceDependency, ServiceEntry } from "./service-entry";
 
@@ -8,7 +8,7 @@ export class EmptyServiceDependency implements IServiceDependency {
         readonly param: DependencyParameter
     ) { }
 
-    resolveArg(_ctx?: InstanciationContext): any { }
+    resolveArg(_ctx?: InstantiationContext): any { }
 
     *entries(): Iterable<ServiceEntry> { }
 }
@@ -19,14 +19,14 @@ export class SingleServiceDependency implements IServiceDependency {
         private readonly _entry: ServiceEntry
     ) { }
 
-    resolveArg(ctx?: InstanciationContext): any {
+    resolveArg(ctx?: InstantiationContext): any {
         if (ctx) {
             return ctx.getInstance(this._entry);
         }
         return this._entry.provider.get(this._entry.desc);
     }
 
-    getDependencyArg(_ctx: InstanciationContext): any { }
+    getDependencyArg(_ctx: InstantiationContext): any { }
 
     *entries(): Iterable<ServiceEntry> {
         yield this._entry;
@@ -43,7 +43,7 @@ export class MultipleServiceDependency implements IServiceDependency {
         this._entries = [...entries];
     }
 
-    resolveArg(ctx?: InstanciationContext): any {
+    resolveArg(ctx?: InstantiationContext): any {
         if (ctx) {
             return this._entries.map(e => ctx.getInstance(e));
         }
