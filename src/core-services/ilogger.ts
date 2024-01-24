@@ -98,6 +98,7 @@ export class DefaultLogger {
             }
             return original;
         });
+        properties["extraValues"] = params;
         const event: LogEvent = {
             scope: this._iocModule.path,
             time: this._clock.utcNow(),
