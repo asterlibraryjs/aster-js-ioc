@@ -53,13 +53,20 @@ export interface ILogger {
     critical(err: unknown, templateMessage: string, ...params: any[]): void;
 }
 
+export type LogEventPropertyKey = string | typeof LogEvent.extraValues | typeof LogEvent.template;
+
 export type LogEvent = {
     readonly scope: string;
     readonly logLevel: LogLevel;
     readonly message: string;
-    readonly properties: Record<string, any>;
+    readonly properties: Record<LogEventPropertyKey, any>;
     readonly time: Date;
     readonly err?: unknown;
+}
+
+export namespace LogEvent {
+    export const extraValues = Symbol("extraValues");
+    export const template = Symbol("template");
 }
 
 export const ILoggerSink = ServiceIdentifier<ILoggerSink>("ILoggerSink");
@@ -86,19 +93,24 @@ export class DefaultLogger {
     ) { }
 
     log(logLevel: LogLevel, err: unknown, templateMessage: string, ...params: any[]): void {
-        const properties: Record<string, any> = {};
+        const properties: Record<string | symbol, any> = {};
         const message = templateMessage.replaceAll(/\{([\w]+)\}/gi, (original, key) => {
             if (properties.hasOwnProperty(key)) {
                 return properties[key];
             }
-            if (params.length !== 0) {
+            if (params.length) {
                 const result = params.shift();
                 properties[key] = result;
                 return result;
             }
             return original;
         });
-        properties["extraValues"] = params;
+
+        properties[LogEvent.template] = templateMessage;
+
+        if (params.length) {
+            properties[LogEvent.extraValues] = params;
+        }
         const event: LogEvent = {
             scope: this._iocModule.path,
             time: this._clock.utcNow(),
