@@ -1,7 +1,7 @@
 import { assert } from "chai";
 import { spy, assert as sassert, SinonSpy, match } from "sinon";
 import { asserts } from "@aster-js/core";
-import { IoCKernel, resolveServiceId, ILogger, LogLevel, IClock, IConfiguration } from "../src";
+import { IoCKernel, resolveServiceId, ILogger, LogLevel, IClock, IConfiguration, LogEvent } from "../src";
 
 class CustomClock implements IClock {
     now(): Date {
@@ -52,10 +52,11 @@ describe("Core Services", () => {
             .build();
 
         const result = services.get(ILogger, true);
-        result.warn(null, "Hello {Name}!!", "Les Petits");
+        result.warn(null, "Hello {Name}!!", "Les Petits", false);
 
         sassert.calledOnce(warnSpy);
-        sassert.calledWith(warnSpy, "[12:00:00.000] [root] Hello Les Petits!!", match({ "Name": "Les Petits" }));
+        const expectedProperties = { "Name": "Les Petits", [LogEvent.extraValues]: [false], [LogEvent.template]: "Hello {Name}!!" };
+        sassert.calledWith(warnSpy, "[12:00:00.000] [root] Hello Les Petits!!", match(expectedProperties));
     });
 
     it("Should not log a info in the console", async () => {
