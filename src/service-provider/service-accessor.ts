@@ -7,6 +7,7 @@ import { IServiceAccessor } from "./iservice-accessor";
 import { ServiceProxy } from "./service-proxy";
 import { HashMap } from "@aster-js/collections";
 
+/** @inheritdoc */
 @ServiceContract(IServiceAccessor)
 export class ServiceAccessor extends DisposableHost implements IServiceAccessor {
     private readonly _proxies: HashMap<any, ServiceProxy>;

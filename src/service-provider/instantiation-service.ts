@@ -56,7 +56,7 @@ export class InstantiationService implements IInstantiationService {
 
         const resolved = new Set();
         for (const node of graph.nodes()) {
-            const instance = ServiceEntry.getScopeInstance(node);
+            const instance = node.getScopeInstance();
             if (instance) {
                 ctx.setInstance(node, instance);
                 resolved.add(node);

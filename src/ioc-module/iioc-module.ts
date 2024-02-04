@@ -5,7 +5,7 @@ import { IServiceProvider, ServiceProvider } from "../service-provider";
 import { IIoCContainerBuilder } from "./iioc-module-builder";
 import { ServiceIdentifier } from "../service-registry";
 
-export const IIoCModule = ServiceIdentifier<IIoCModule>("IIoCModule");
+export const IIoCModule = ServiceIdentifier<IIoCModule>({ name: "IIoCModule", unique: true });
 
 export enum IoCModuleSetupResultBehavior {
     continue,

@@ -3,7 +3,7 @@ import { Constructor } from "@aster-js/core";
 import { IServiceDescriptor } from "../service-descriptors";
 import { ServiceIdentifier } from "../service-registry";
 
-export const IServiceProvider = ServiceIdentifier<IServiceProvider>("IServiceProvider");
+export const IServiceProvider = ServiceIdentifier<IServiceProvider>({ name: "IServiceProvider", unique: true });
 
 export interface IServiceProvider {
     parent(): IServiceProvider | undefined;

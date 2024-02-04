@@ -13,23 +13,24 @@ export interface IServiceDependency {
     entries(): Iterable<ServiceEntry>;
 }
 
-export type ServiceEntry = {
+export class ServiceEntry {
 
-    readonly uid: string;
-
-    readonly desc: IServiceDescriptor;
-
-    readonly provider: ServiceProvider;
-
-    readonly dependencies?: IServiceDependency[];
-}
-
-export namespace ServiceEntry {
-    export function create(desc: IServiceDescriptor, provider: ServiceProvider): ServiceEntry {
-        const uid = `${Tags.hashId(desc)}-${Tags.hashId(provider)}`;
-        return { uid, desc, provider };
+    private constructor(readonly uid: string, readonly desc: IServiceDescriptor, readonly provider: ServiceProvider, readonly dependencies?: IServiceDependency[]) {
+        this.uid = uid;
+        this.desc = desc;
+        this.provider = provider;
     }
-    export function getScopeInstance({ desc, provider }: ServiceEntry): any {
-        return provider.getOwnInstance(desc);
+
+    getScopeInstance(): any {
+        return this.provider.getOwnInstance(this.desc);
+    }
+
+    withDependencies(dependencies: IServiceDependency[]): ServiceEntry {
+        return new ServiceEntry(this.uid, this.desc, this.provider, dependencies);
+    }
+
+    static create(desc: IServiceDescriptor, provider: ServiceProvider): ServiceEntry {
+        const uid = `${Tags.hashId(desc)}-${Tags.hashId(provider)}`;
+        return new ServiceEntry(uid, desc, provider);
     }
 }

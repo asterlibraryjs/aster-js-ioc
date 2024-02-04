@@ -5,7 +5,7 @@ import { ServiceIdentifier } from "../service-registry";
 import { ServiceEntry } from "./service-entry";
 import { InstantiationContext } from "./instantiation-context";
 
-export const IInstantiationService = ServiceIdentifier<IInstantiationService>("IInstantiationService");
+export const IInstantiationService = ServiceIdentifier<IInstantiationService>({ name: "IInstantiationService", unique: true });
 
 /** Provides methods to retrieve services and resolving dependencies */
 export interface IInstantiationService {
