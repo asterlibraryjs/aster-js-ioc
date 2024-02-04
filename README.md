@@ -88,6 +88,71 @@ kernel.start();
 
 And obviously, getting an address of a customer like that is a bit overkill.
 
+### Injection methods
+
+#### Basic: Use the service identifier
+
+```ts
+constructor(@IHttpService httpService: IHttpService) { }
+```
+
+#### Anonymous: When you didn't declare explicit service id
+
+```ts
+constructor(@Inject(CustomerService) customerService: CustomerService) { }
+```
+
+#### Optional: Service may not be registered
+
+```ts
+constructor(@Optional(IHttpService) httpService: IHttpService | undefined) { }
+```
+
+#### Many: Inject all accessible instances
+Requires a service identfier and as many service registration you need... 0 will inject an empty and 3 will inject the 3 instances.
+```ts
+constructor(@Many(IHandler) handlers: IHandler[]) { }
+```
+
+#### Options: Merge all accessible instances into 1
+Requires a service identfier that will describe options required by other services.
+This pattern will allow user of your services to customize options related to their usage.
+At the end, the service that consume options will get a single instance where all individual instances are merge into.
+```ts
+export const HttpOptions = ServiceIdentifier<HttpOptions>("HttpOptions");
+
+export type HttpOptions = {
+    readonly baseAddress: string;
+    readonly defaultHeaders: Record<string, string>;
+}
+
+export HttpClient {
+    constructor(@Options(HttpOptions) private readonly _options: HttpOptions) { }
+
+// Default options can be injected through a default function
+// provided by the lib with other required services
+function addHttpClient(builder: IIoCModuleBuilder) {
+    return builder.configure(services =>{
+        services.addInstance(HttpOptions, {
+            baseAddress: location.origin + "/api",
+            defaultHeaders:{},
+            authenticate: false,
+            useProxy: false
+        });
+    });
+}
+
+// Using the lib, you can should which property to override
+addHttpClient(builder)
+    .configure(services =>{
+        services.addInstance(HttpOptions, {
+            baseAddress: "https://myapi.myorg.org",
+            authenticate: true
+        });
+    });
+```
+
+
 ## See Also
 - [Service Factory](./doc/factory.md)
 - [Service Provider](./doc/provider.md)

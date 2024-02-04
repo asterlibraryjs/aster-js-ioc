@@ -54,3 +54,36 @@ export class MultipleServiceDependency implements IServiceDependency {
         yield* this._entries;
     }
 }
+
+
+export class OptionsServiceDependency implements IServiceDependency {
+    private readonly _entries: ServiceEntry[];
+
+    constructor(
+        readonly param: DependencyParameter,
+        entries: Iterable<ServiceEntry>
+    ) {
+        this._entries = [...entries];
+    }
+
+    resolveArg(ctx?: InstantiationContext): any {
+        const result = {};
+        for (const opts of this.resolveOptions(ctx)) {
+            Object.assign(result, opts);
+        }
+        return result;
+    }
+
+    private *resolveOptions(ctx: InstantiationContext | undefined): Iterable<any> {
+        if (ctx) {
+            for (const e of this._entries) yield ctx.getInstance(e);
+        }
+        else {
+            for (const e of this._entries) yield e.provider.get(e.desc);
+        }
+    }
+
+    *entries(): Iterable<ServiceEntry> {
+        yield* this._entries;
+    }
+}

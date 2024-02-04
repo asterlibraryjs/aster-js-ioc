@@ -2,7 +2,7 @@ import { Constructor, ReadonlyTag } from "@aster-js/core";
 
 import { ServiceIdentifier, ServiceIdentifierOptions, ServiceIdentityTag } from './service-identifier';
 
-export type DependencyParameterType = "optional" | "required" | "many";
+export type DependencyParameterType = "optional" | "required" | "many" | "options";
 
 export interface DependencyParameter {
     readonly serviceId: ServiceIdentifier;

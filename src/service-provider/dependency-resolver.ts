@@ -6,7 +6,7 @@ import { IServiceDescriptor, ServiceLifetime } from "../service-descriptors";
 
 import { IDependencyResolver } from "./idependency-resolver";
 import { IServiceDependency, ServiceEntry } from "./service-entry";
-import { MultipleServiceDependency, EmptyServiceDependency, SingleServiceDependency } from "./dependency-entry";
+import { MultipleServiceDependency, EmptyServiceDependency, SingleServiceDependency, OptionsServiceDependency } from "./dependency-entry";
 import { ServiceProvider } from "./service-provider";
 
 @ServiceContract(IDependencyResolver)
@@ -51,7 +51,11 @@ export class DependencyResolver implements IDependencyResolver {
         for (const param of ServiceIdentifier.registry.dependencies(ctor)) {
             if (param.type === "many") {
                 const entries = this.resolveEntries(param.serviceId);
-                yield new MultipleServiceDependency(param, entries)
+                yield new MultipleServiceDependency(param, entries);
+            }
+            else if (param.type === "options") {
+                const entries = this.resolveEntries(param.serviceId);
+                yield new OptionsServiceDependency(param, entries);
             }
             else {
                 const found = this.resolveEntry(param.serviceId);
