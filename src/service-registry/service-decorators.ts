@@ -13,6 +13,12 @@ export function Many(serviceId: ServiceIdentifier): (target: Constructor, proper
     };
 }
 
+export function Options(serviceId: ServiceIdentifier): (target: Constructor, propertyKey: string | symbol | undefined, index: number) => void {
+    return (target: Constructor, _: string | symbol | undefined, index: number) => {
+        ServiceIdentifier.registry.addDependency(target, serviceId, index, "options");
+    };
+}
+
 export function Inject(type: Constructor, optional?: boolean): (target: Constructor, propertyKey: string | symbol | undefined, index: number) => void {
     return (target: Constructor, _: string | symbol | undefined, index: number) => {
         const serviceId = ServiceIdentifier.registry.resolve(type);
