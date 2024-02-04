@@ -1,9 +1,9 @@
-import { Iterables, Iterators } from "@aster-js/iterators";
+import { Iterables } from "@aster-js/iterators";
 import { ServiceIdentifier } from "../service-registry";
 import { IIoCModule } from "./iioc-module";
 
 export function findRootService<T>(serviceId: ServiceIdentifier<T>, module: IIoCModule): T | undefined {
-    const all = AllParentServices<T>(serviceId, module, false);
+    const all = AllParentServices<T>(serviceId, module, true);
     return Iterables.last(all);
 }
 

@@ -91,19 +91,19 @@ And obviously, getting an address of a customer like that is a bit overkill.
 ### Injection methods
 
 #### Basic: Use the service identifier
-
+Every service identifier is also a decorator that enable constructor parameter injection.
 ```ts
 constructor(@IHttpService httpService: IHttpService) { }
 ```
 
 #### Anonymous: When you didn't declare explicit service id
-
+`@Inject` decorator will find the service id associated to your class.
 ```ts
 constructor(@Inject(CustomerService) customerService: CustomerService) { }
 ```
 
 #### Optional: Service may not be registered
-
+You can try to reference a service even tho it may not be registered.
 ```ts
 constructor(@Optional(IHttpService) httpService: IHttpService | undefined) { }
 ```
