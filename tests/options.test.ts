@@ -28,6 +28,8 @@ describe("Dependency Injection without Graph", () => {
             .configure(services => {
                 services.addSingleton(CustomerService);
                 services.addSingleton(DefaultOptions);
+
+
                 services.addInstance(IServiceOptions, { count: 22, enabled: true }, {});
             })
             .build();
