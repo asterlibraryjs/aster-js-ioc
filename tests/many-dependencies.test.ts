@@ -1,5 +1,5 @@
 import { assert } from "chai";
-import { IoCKernel } from "../src";
+import { IServiceProvider, Inject, IoCKernel, resolveServiceId } from "../src";
 import { BasicCustomerService, ICustomerService, NoDependencyCustomerService, HttpService, AdvancedCustomerService } from "./service.mocks";
 
 describe("Dependency Injection with multiple instance of the same service", () => {
@@ -19,9 +19,9 @@ describe("Dependency Injection with multiple instance of the same service", () =
         const result = [...services.getAll(ICustomerService)];
 
         assert.equal(result.length, 3);
-        assert.instanceOf(result[0], NoDependencyCustomerService);
-        assert.instanceOf(result[1], BasicCustomerService);
-        assert.instanceOf(result[2], AdvancedCustomerService);
+        assert.instanceOf(result[0], NoDependencyCustomerService, "NoDependencyCustomerService");
+        assert.instanceOf(result[1], BasicCustomerService, "BasicCustomerService");
+        assert.instanceOf(result[2], AdvancedCustomerService, "AdvancedCustomerService");
         assert.equal(await result[2].getAddress("Bob"), "Hello Bob !<br/>Data from /api/customers/Bob");
     });
 
@@ -92,5 +92,41 @@ describe("Dependency Injection with multiple instance of the same service", () =
 
         assert.equal(result.length, 1);
         assert.instanceOf(result[0], NoDependencyCustomerService);
+    });
+
+    it("Should succeed with multiple ref to the same service", async () => {
+        class EnvService { }
+        class Service1 {
+            constructor(
+                @IServiceProvider readonly services: IServiceProvider,
+                @Inject(EnvService) readonly env: EnvService) { }
+        }
+        class Service2 {
+            constructor(
+                @IServiceProvider readonly services: IServiceProvider,
+                @Inject(EnvService) readonly env: EnvService) { }
+        }
+        class RootService {
+            constructor(
+                @IServiceProvider readonly services: IServiceProvider,
+                @Inject(Service2) readonly service2: Service2,
+                @Inject(Service1) readonly service1: Service1) { }
+        }
+        const kernel = IoCKernel.create()
+            .configure(services => {
+                services
+                    .addSingleton(EnvService)
+                    .addSingleton(RootService)
+                    .addSingleton(Service1)
+                    .addSingleton(Service2)
+            })
+            .build();
+
+        const result = kernel.services.get(resolveServiceId(RootService), true);
+
+        assert.isDefined(result.service1);
+        assert.isDefined(result.service2);
+        assert.instanceOf(result.service1.env, EnvService);
+        assert.instanceOf(result.service2.env, EnvService);
     });
 });
