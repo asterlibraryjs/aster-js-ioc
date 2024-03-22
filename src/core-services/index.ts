@@ -1,4 +1,3 @@
-import { ServiceScope } from "src/service-descriptors";
 import { ServiceCollection } from "../service-collection/service-collection";
 import { IClock, SystemClock } from "./iclock";
 import { IConfiguration, Configuration } from "./iconfiguration";

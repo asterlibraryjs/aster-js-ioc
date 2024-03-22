@@ -2,7 +2,7 @@ import { DisposableHost, IDisposable } from "@aster-js/core";
 import { EventEmitter, IEvent } from "@aster-js/events";
 import { ServiceContract, ServiceIdentifier } from "../service-registry";
 
-export const IConfiguration = ServiceIdentifier<IConfiguration>("IConfiguration");
+export const IConfiguration = ServiceIdentifier<IConfiguration>({ namespace: "@aster-js/ioc", name: "IConfiguration", unique: true });
 
 export interface IConfiguration<T = unknown> extends IDisposable {
 

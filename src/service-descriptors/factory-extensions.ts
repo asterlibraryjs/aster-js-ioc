@@ -1,10 +1,10 @@
 import { Constructor } from "@aster-js/core";
 
-import { ServiceContract } from "../service-registry/service-contract";
 import { ServiceFactoryConstructor, ServiceFactoryTag } from "../service-registry/service-factory";
 import { ServiceCollection } from "../service-collection/service-collection";
 
-import { ServiceOptions, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
+import { ServiceOptions } from "./iservice-descriptor";
+import { ServiceLifetime, ServiceScope } from "./scopes";
 import { ServiceFactoryDescriptor } from "./service-factory-descriptor";
 import { ServiceIdentifier } from "../service-registry";
 

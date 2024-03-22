@@ -1,6 +1,6 @@
 import { ServiceContract, ServiceIdentifier } from "../service-registry";
 
-export const IClock = ServiceIdentifier<IClock>("IClock");
+export const IClock = ServiceIdentifier<IClock>({ namespace: "@aster-js/ioc", name: "IClock", unique: true });
 
 export interface IClock {
     now(): Date;

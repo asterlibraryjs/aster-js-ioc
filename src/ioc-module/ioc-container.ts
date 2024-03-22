@@ -1,12 +1,13 @@
-import { DisposableHost, IDisposable, Lazy } from "@aster-js/core";
-import { AbortableToken, AbortToken, Deferred, Delayed, assertAllSettledResult } from "@aster-js/async";
+import { DisposableHost, IDisposable } from "@aster-js/core";
+import { AbortableToken, AbortToken, Deferred, Delayed } from "@aster-js/async";
 
 import type { ServiceProvider } from "../service-provider";
 
 import { IIoCModule, IIoCModuleSetupAction, IoCModuleSetupExecBehavior, IoCModuleSetupResultBehavior } from "./iioc-module";
 import type { IIoCContainerBuilder } from "./iioc-module-builder";
 import type { IoCModuleBuilder } from "./ioc-module-builder";
-import { Memoize } from "@aster-js/decorators";
+import { Memoize, cacheResult } from "@aster-js/decorators";
+import { ILogger } from "../core-services";
 
 function* resolvePathSegments(target: IIoCModule): Iterable<string> {
     let current: IIoCModule | undefined = target;
@@ -32,6 +33,8 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
     get services(): ServiceProvider { return this._provider; }
 
     get ready(): PromiseLike<this> { return this._ready; }
+
+    get logger(): ILogger | undefined { return this._provider.get(ILogger); }
 
     constructor(
         readonly name: string,
@@ -61,10 +64,14 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
         this._token = token;
 
         const setups = this._setups.splice(0);
+        let idx = 0;
         try {
             const asyncTasks = [];
 
-            for (const setup of setups) {
+            this.logger?.debug("Starting IoC module with {setupCount} setups and {serviceCount}", setups.length, this.services.size);
+
+            for (; idx < setups.length; idx++) {
+                const setup = setups[idx];
                 token.throwIfAborted();
 
                 const task = setup.exec(this._provider, token);
@@ -79,18 +86,46 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
             }
 
             if (asyncTasks.length !== 0) {
-                const results = await Promise.allSettled(asyncTasks);
-                assertAllSettledResult(results);
+                await this.execAsyncTasks(asyncTasks);
             }
+
+            this.logger?.info("Application successfully started.");
 
             this._ready.resolve(this);
             return true;
         }
         catch (err) {
-            token.abort(err);
-
-            this._ready.reject(err);
+            this.handleSetupError(err, idx, setups, token);
             return false;
+        }
+    }
+
+    private handleSetupError(err: unknown, taskIdx: number, setups: IIoCModuleSetupAction[], token: AbortableToken): void {
+        try {
+            this.logger?.critical(err, "Error while executing IoC setup action #{number} of the {count} setups", taskIdx, setups.length);
+            this._ready.reject(err);
+        }
+        finally {
+            token.abort(err);
+        }
+    }
+
+    private async execAsyncTasks(asyncTasks: PromiseLike<IoCModuleSetupResultBehavior>[]): Promise<void> {
+        const results = await Promise.allSettled(asyncTasks);
+
+        const rejected = results.filter(r => r.status === "rejected");
+
+        if (rejected.length !== 0) {
+
+            const logger = this.logger;
+            if (logger) {
+                for (let i = 0; i < rejected.length; i++) {
+                    const fault = rejected[i];
+                    logger.critical((<PromiseRejectedResult>fault).reason, "Error while executing IoC setup action ({number}/{count})", i + 1, rejected.length);
+                }
+            }
+
+            throw new AggregateError(rejected.map(r => (<PromiseRejectedResult>r).reason), "Error while executing IoC setup action");
         }
     }
 

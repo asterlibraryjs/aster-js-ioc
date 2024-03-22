@@ -2,7 +2,7 @@ import { DisposableHost, IDisposable } from "@aster-js/core";
 import { Lookup } from "@aster-js/collections";
 
 import { IServiceDescriptor } from "../service-descriptors";
-import { ServiceIdentifier, ServiceIdentityTag } from "../service-registry";
+import { ServiceIdentifier, ServiceIdentifierTag } from "../service-registry";
 
 import { IServiceCollection } from "./iservice-collection";
 
@@ -14,7 +14,7 @@ export class ServiceCollection extends DisposableHost implements IServiceCollect
     constructor(descriptors: Iterable<IServiceDescriptor> = []) {
         super();
         const values = ServiceCollection.entries(descriptors);
-        this._store = Lookup.create(values, ServiceIdentityTag.get);
+        this._store = Lookup.create(values, ServiceIdentifierTag.get);
     }
 
     has(serviceIdOrDescriptor: ServiceIdentifier | IServiceDescriptor): boolean {

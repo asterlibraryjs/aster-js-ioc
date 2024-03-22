@@ -5,7 +5,7 @@ import { ServiceIdentifier } from "../service-registry";
 import { ServiceEntry } from "./service-entry";
 import { InstantiationContext } from "./instantiation-context";
 
-export const IInstantiationService = ServiceIdentifier<IInstantiationService>({ name: "IInstantiationService", unique: true });
+export const IInstantiationService = ServiceIdentifier<IInstantiationService>({ namespace: "@aster-js/ioc", name: "IInstantiationService", unique: true });
 
 /** Provides methods to retrieve services and resolving dependencies */
 export interface IInstantiationService {

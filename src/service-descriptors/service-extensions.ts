@@ -4,8 +4,9 @@ import { ServiceContract } from "../service-registry/service-contract";
 import { ServiceDescriptor } from "./service-descriptor";
 import { ServiceCollection } from "../service-collection/service-collection";
 
-import { ServiceOptions, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
+import { ServiceOptions } from "./iservice-descriptor";
 import { ServiceIdentifier } from "../service-registry";
+import { ServiceLifetime, ServiceScope } from "./scopes";
 
 interface IServiceCollectionExtensions {
     addService(lifetime: ServiceLifetime, servicerId: ServiceIdentifier, ctor: Constructor, options?: ServiceOptions): ServiceCollection;
