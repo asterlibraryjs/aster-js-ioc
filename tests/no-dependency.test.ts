@@ -2,6 +2,7 @@ import { assert } from "chai";
 import { assert as sassert, spy } from "sinon";
 import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject, Many, SetupErrorHandlerResult, ServiceScope } from "../src";
 import { HttpClient, ICustomerService, NoContractCustomerService, NoDependencyCustomerService } from "./service.mocks";
+import { assertIdentity } from "./identity-assertions";
 
 describe("Dependency Injection without Graph", () => {
 
@@ -296,24 +297,24 @@ describe("Dependency Injection without Graph", () => {
     });
 
     it("Should bind properly a factory", async () => {
+        let created = false;
         const { services } = IoCKernel.create()
             .configure(services => services.addSingletonFactory(
                 IServiceFactory.create(ICustomerService, acc => {
                     const provider = acc.get(IServiceProvider, true);
+                    created = true;
                     return provider.createInstance(NoDependencyCustomerService);
                 }, NoDependencyCustomerService)
             ))
             .build();
 
-        const createInstanceSpy = spy(services, "createInstance");
-
         const result = services.get(ICustomerService);
 
-        sassert.notCalled(createInstanceSpy); // Factory should not be called immediatly
+        assert.isFalse(created, "Factory should not be called immediatly");
 
         assert.instanceOf(result, NoDependencyCustomerService);
         assert.equal(await result!.getAddress("bo"), "Hello bo !");
-        sassert.calledOnce(createInstanceSpy);
+        assert.isTrue(created, "Factory should be called");
     });
 
     it("Should bind properly a factory with explicit id", async () => {
@@ -356,15 +357,17 @@ describe("Dependency Injection without Graph", () => {
         const deepChildModule = childModule.createChildScope("deep-child").build();
 
         const kernelResult = [...kernel.services.getAll(ICustomerService)];
-        assert.equal(kernelResult.length, 1);
+        assert.equal(kernelResult.length, 1, "Scoped service should be found in kernel");
         assert.isFalse(kernelResult[0].initialized);
 
         const childResult = [...childModule.services.getAll(ICustomerService)];
-        assert.equal(childResult.length, 1);
+        assert.equal(childResult.length, 1, "Scoped service should be found in child module");
         assert.isTrue(childResult[0].initialized);
 
+        assertIdentity(childResult[0], ICustomerService);
+
         const deepResult = [...deepChildModule.services.getAll(ICustomerService)];
-        assert.equal(deepResult.length, 0);
+        assert.equal(deepResult.length, 0, "No scoped service should be found in deep child module");
     });
 
     it("Should compute proper path", async () => {
@@ -396,5 +399,6 @@ describe("Dependency Injection without Graph", () => {
 
         assert.isDefined(result.svc);
         assert.instanceOf(result.svc, NoDependencyCustomerService);
+        assertIdentity(result.svc, ICustomerService);
     });
 });

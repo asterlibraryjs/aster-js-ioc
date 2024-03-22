@@ -1,6 +1,6 @@
-import { Constructor, ReadonlyTag } from "@aster-js/core";
+import { Constructor } from "@aster-js/core";
 
-import { ServiceIdentifier, ServiceIdentifierOptions, ServiceIdentityTag } from './service-identifier';
+import { ServiceIdentifier, ServiceIdentifierOptions, ServiceIdentifierTag } from './service-identifier';
 
 export type DependencyParameterType = "optional" | "required" | "many" | "options";
 
@@ -15,11 +15,8 @@ export class ServiceRegistry {
     private readonly _dependencies: Map<Constructor, DependencyParameter[]> = new Map();
 
     constructor(
-        private readonly _resolver: (ctor: Constructor) => ServiceIdentifier,
-        private readonly _tag: ReadonlyTag<string | symbol | Constructor | undefined>
-    ) {
-
-    }
+        private readonly _resolver: (ctor: Constructor) => ServiceIdentifier
+    ) { }
 
     *dependencies(ctor: Constructor): Iterable<DependencyParameter> {
         const deps = this._dependencies.get(ctor);
@@ -39,7 +36,7 @@ export class ServiceRegistry {
     }
 
     add(serviceId: ServiceIdentifier, options: ServiceIdentifierOptions): void {
-        const tagId = ServiceIdentityTag(serviceId);
+        const tagId = ServiceIdentifierTag(serviceId);
 
         if (!tagId) {
             throw new Error(`Invalid service id: ${serviceId}`);

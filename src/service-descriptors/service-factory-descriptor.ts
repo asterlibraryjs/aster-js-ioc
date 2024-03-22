@@ -2,7 +2,8 @@ import { Constructor } from "@aster-js/core";
 
 import { ServiceFactoryConstructor, ServiceIdentifier } from "../service-registry";
 
-import { IServiceDescriptor, ServiceLifetime, ServiceScope } from "./iservice-descriptor";
+import { IServiceDescriptor } from "./iservice-descriptor";
+import { ServiceLifetime, ServiceScope } from "./scopes";
 
 export class ServiceFactoryDescriptor implements IServiceDescriptor {
 

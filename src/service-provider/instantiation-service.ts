@@ -1,14 +1,16 @@
-import { IDisposable, Lazy, asserts, Constructor } from "@aster-js/core";
+import { IDisposable, Lazy, asserts, Constructor, Tag } from "@aster-js/core";
 import { EventEmitter, IEvent } from "@aster-js/events";
 
 import { IServiceFactory, ServiceContract, ServiceIdentifier } from "../service-registry";
-import { IServiceDescriptor, ServiceFactoryDescriptor } from "../service-descriptors";
+import { IServiceDescriptor, ServiceDescriptor, ServiceFactoryDescriptor } from "../service-descriptors";
 
 import { IDependencyResolver } from "./idependency-resolver";
 import { IInstantiationService } from "./iinstantiation-service";
 import { InstantiationContext } from "./instantiation-context";
 import { ServiceEntry } from "./service-entry";
 import { InstantiationError } from "./instantiation-error";
+import { IServiceProvider } from "./iservice-provider";
+import { setIdentity } from "./service-identity";
 
 @ServiceContract(IInstantiationService)
 export class InstantiationService implements IInstantiationService {
@@ -17,7 +19,8 @@ export class InstantiationService implements IInstantiationService {
     get onDidServiceInstantiated(): IEvent<[desc: IServiceDescriptor, instance: any]> { return this._onDidServiceInstantiated.event; }
 
     constructor(
-        @IDependencyResolver private readonly _dependencyResolver: IDependencyResolver
+        private readonly _dependencyResolver: IDependencyResolver,
+        private readonly _serviceProvider: IServiceProvider
     ) { }
 
     createService(desc: IServiceDescriptor): any {
@@ -84,7 +87,7 @@ export class InstantiationService implements IInstantiationService {
         asserts.defined(entry.dependencies);
 
         const dependencies = entry.dependencies.map(dep => dep.resolveArg(ctx));
-        let instance = this.createInstance(entry.desc.serviceId, entry.desc.ctor, [...entry.desc.baseArgs, ...dependencies]);
+        let instance = this.createInstance(entry.desc, entry.desc.ctor, [...entry.desc.baseArgs, ...dependencies]);
 
         if (entry.desc instanceof ServiceFactoryDescriptor) {
             const factory = instance as IServiceFactory;
@@ -100,6 +103,7 @@ export class InstantiationService implements IInstantiationService {
                     finally {
                         IDisposable.safeDispose(factory);
                     }
+                    setIdentity(instance, entry.desc, this._serviceProvider);
 
                     this.onInstanceCreated(entry.desc, instance);
                     return instance;
@@ -109,22 +113,25 @@ export class InstantiationService implements IInstantiationService {
 
             instance = lazyValue.get();
         }
+        else{
+            setIdentity(instance, entry.desc, this._serviceProvider);
+        }
 
         this.onInstanceCreated(entry.desc, instance);
         return instance;
     }
 
-    private createInstance(serviceId: ServiceIdentifier, ctor: Constructor, args: any[]): any {
+    private createInstance(desc: IServiceDescriptor, ctor: Constructor, args: any[]): any {
         try {
             return new ctor(...args);
         }
         catch (err) {
-            if(err instanceof Error){
-                throw new InstantiationError(serviceId, err);
+            if (err instanceof Error) {
+                throw new InstantiationError(desc.serviceId, err);
             }
-            else{
+            else {
                 const wrap = new Error(String(err));
-                throw new InstantiationError(serviceId, wrap);
+                throw new InstantiationError(desc.serviceId, wrap);
             }
         }
     }

@@ -30,7 +30,7 @@ export class IoCKernelBuilder extends IoCContainerBuilder {
     }
 
     protected createServiceProvider(services: ServiceCollection): ServiceProvider {
-        return new ServiceProvider(services);
+        return ServiceProvider.create(services);
     }
 
     protected configureDefaultServices(services: ServiceCollection, _provider: ServiceProvider): void {

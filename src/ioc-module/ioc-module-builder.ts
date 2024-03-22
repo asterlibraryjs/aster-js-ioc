@@ -27,6 +27,6 @@ export class IoCModuleBuilder extends IoCContainerBuilder {
     }
 
     protected createServiceProvider(services: ServiceCollection): ServiceProvider {
-        return new ServiceProvider(services, this._parent.services);
+        return ServiceProvider.create(services, this._parent.services);
     }
 }

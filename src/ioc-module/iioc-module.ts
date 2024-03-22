@@ -5,7 +5,7 @@ import { IServiceProvider, ServiceProvider } from "../service-provider";
 import { IIoCContainerBuilder } from "./iioc-module-builder";
 import { ServiceIdentifier } from "../service-registry";
 
-export const IIoCModule = ServiceIdentifier<IIoCModule>({ name: "IIoCModule", unique: true });
+export const IIoCModule = ServiceIdentifier<IIoCModule>({ namespace: "@aster-js/ioc", name: "IIoCModule", unique: true });
 
 export enum IoCModuleSetupResultBehavior {
     continue,

@@ -6,7 +6,7 @@ import { Constructor } from "@aster-js/core";
 import { ServiceProvider } from "./service-provider";
 import { IServiceDescriptor } from "../service-descriptors";
 
-export const IDependencyResolver = ServiceIdentifier<IDependencyResolver>({ name: "IDependencyResolver", unique: true });
+export const IDependencyResolver = ServiceIdentifier<IDependencyResolver>({ namespace: "@aster-js/ioc", name: "IDependencyResolver", unique: true });
 
 /**
  * Provides methods to retrieve service descriptors and ressolving dependencies

@@ -1,4 +1,4 @@
-import { Constructor, IDisposable } from "@aster-js/core";
+import { Constructor, IDisposable, Lazy } from "@aster-js/core";
 import { Iterables } from "@aster-js/iterators";
 
 import { ServiceIdentifier, ServiceContract, isAllowedScope } from "../service-registry";
@@ -10,33 +10,27 @@ import { IDependencyResolver } from "./idependency-resolver";
 import { IInstantiationService } from "./iinstantiation-service";
 import { InstantiationService } from "./instantiation-service";
 import { DependencyResolver } from "./dependency-resolver";
+import { setIdentity } from "./service-identity";
 
 @ServiceContract(IServiceProvider)
 export class ServiceProvider implements IServiceProvider, IDisposable {
     private readonly _instances: Map<IServiceDescriptor, any>;
-    private readonly _dependencyResolver: IDependencyResolver;
-    private readonly _instanciationService: IInstantiationService;
+    private readonly _self: ServiceProvider = this; // Allow internal bypass for proxy ref
+
+    get size(): number { return Math.max(this._services.size, this._instances.size); }
 
     constructor(
         private readonly _services: IServiceCollection,
+        private readonly _dependencyResolver: IDependencyResolver,
+        private readonly _instanciationService: IInstantiationService,
         private readonly _parent?: ServiceProvider
     ) {
         this._instances = new Map();
-        this._dependencyResolver = this.createDependencyResolver();
-        this._instanciationService = this.createInstanciationService();
-        this._instanciationService.onDidServiceInstantiated(this.onDidServiceInstantiated, this);
 
         this.addCoreService(IDependencyResolver, this._dependencyResolver);
         this.addCoreService(IInstantiationService, this._instanciationService);
         this.addCoreService(IServiceProvider, this);
-    }
-
-    protected createDependencyResolver(): DependencyResolver {
-        return new DependencyResolver(this);
-    }
-
-    protected createInstanciationService(): IInstantiationService {
-        return new InstantiationService(this._dependencyResolver);
+        this._instanciationService.onDidServiceInstantiated(this.onDidServiceInstantiated, this);
     }
 
     protected addCoreService<T extends Object>(serviceId: ServiceIdentifier<T>, instance: T): void {
@@ -128,7 +122,7 @@ export class ServiceProvider implements IServiceProvider, IDisposable {
         }
         else {
             for (const provider of this._dependencyResolver.resolveProviders(serviceId)) {
-                if (provider === this) {
+                if (provider._self === this._self) {
                     const descriptors = this._services.get(serviceId);
                     yield* this.fetchOrCreateOwnInstances(descriptors);
                 }
@@ -168,5 +162,31 @@ export class ServiceProvider implements IServiceProvider, IDisposable {
         this._instances.clear();
 
         IDisposable.safeDisposeAll(instances);
+    }
+
+    static create(services: IServiceCollection, parent?: ServiceProvider): ServiceProvider {
+        let result: ServiceProvider;
+        const lazyRef = Lazy.get(() => {
+            if (!result) {
+                throw new Error("Service provider not initialized.");
+            }
+            return result;
+        });
+
+        const dependencyResolver = new DependencyResolver(lazyRef);
+        const instanciationService = new InstantiationService(dependencyResolver, lazyRef);
+
+        result = new ServiceProvider(services, dependencyResolver, instanciationService, parent);
+
+        this.setDefaultIdentity(IServiceProvider, ServiceProvider, parent ?? result);
+        this.setDefaultIdentity(IDependencyResolver, DependencyResolver, result);
+        this.setDefaultIdentity(IInstantiationService, InstantiationService, result);
+
+        return result;
+    }
+
+    private static setDefaultIdentity(serviceId: ServiceIdentifier, instance: any, owner: IServiceProvider): void {
+        const desc = new ServiceDescriptor(serviceId, ServiceLifetime.singleton, ServiceScope.container, instance.constructor, [], false);
+        setIdentity(instance, desc, owner);
     }
 }

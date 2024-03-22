@@ -37,7 +37,9 @@ describe("Dependency Injection without Graph", () => {
         const serviceId = resolveServiceId(CustomerService);
         const result = container.services.get(serviceId, true);
 
-        assert.deepEqual(result.options, { name: "bob", count: 22, enabled: true });
+        assert.isTrue(result.options.enabled, "result.options.enabled");
+        assert.equal(result.options.count,  22, "result.options.count");
+        assert.equal(result.options.name, "bob", "result.options.name");
     });
 
 });

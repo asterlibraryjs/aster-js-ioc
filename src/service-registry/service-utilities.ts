@@ -1,5 +1,5 @@
 import { Constructor } from "@aster-js/core";
-import { ServiceScope } from "src/service-descriptors";
+import { ServiceScope } from "../service-descriptors/scopes";
 import { ServiceIdentifier } from "./service-identifier";
 
 export function isAllowedScope(scope: ServiceScope, owned: boolean): boolean {

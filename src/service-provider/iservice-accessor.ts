@@ -2,7 +2,7 @@ import { IDisposable } from "@aster-js/core";
 
 import { ServiceIdentifier } from "../service-registry/service-identifier";
 
-export const IServiceAccessor = ServiceIdentifier<IServiceAccessor>({ name: "IServiceAccessor", unique: true });
+export const IServiceAccessor = ServiceIdentifier<IServiceAccessor>({ namespace: "@aster-js/ioc", name: "IServiceAccessor", unique: true });
 
 /**
  * Service id and implementation for giving temporary access to services

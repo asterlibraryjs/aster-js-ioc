@@ -2,7 +2,7 @@ import { Many, ServiceContract, ServiceIdentifier } from "../service-registry";
 import { IClock } from "./iclock";
 import { IIoCModule } from "../ioc-module";
 
-export const ILogger = ServiceIdentifier<ILogger>("ILogger");
+export const ILogger = ServiceIdentifier<ILogger>({ namespace: "@aster-js/ioc", name: "ILogger", unique: true });
 export interface ILogger {
     /**
      * Log an event and propagate it over all registered sinks

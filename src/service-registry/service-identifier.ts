@@ -3,9 +3,12 @@ import { Constructor, Tag } from "@aster-js/core";
 import { ServiceRegistry } from "./service-registry";
 
 const serviceIdentityTag = Tag<string | symbol | Constructor>("IoC/ServiceId");
-export const ServiceIdentityTag = serviceIdentityTag.readOnly();
+export const ServiceIdentifierTag = serviceIdentityTag.readOnly();
 
 export interface ServiceIdentifierOptions {
+    /** The namespace of the service used to scope services in their respective library. */
+    readonly namespace?: string;
+    /** The name of the service */
     readonly name: string;
     /**
      * Indicate whether or not this identity name should be unique or not.
@@ -24,25 +27,32 @@ export interface ServiceIdentifierDecorator {
 }
 
 export interface ServiceIdentifierImpl<T> {
+    [Symbol.toPrimitive](): string;
     /** Returns the registration name */
     toString(): string;
 }
 
-export function ServiceIdentifier<T>(nameOrOptions: string | ServiceIdentifierOptions): ServiceIdentifier<T> {
-    const options = typeof nameOrOptions === "string" ? { name: nameOrOptions } : nameOrOptions;
-    const hashValue = options.unique ? options.name : Symbol(options.name);
+const defaultOptions = { namespace: "local", unique: false, name: "" };
+
+export function ServiceIdentifier<T>(nameOrOptions: string | Partial<ServiceIdentifierOptions>): ServiceIdentifier<T> {
+    const options = typeof nameOrOptions === "string"
+        ? { ...defaultOptions, name: nameOrOptions }
+        : { ...defaultOptions, ...nameOrOptions };
+
+    const fullName = getFullName(options);
+    const hashValue = options.unique ? fullName : Symbol(fullName);
     return create(hashValue, options);
 }
 
 export namespace ServiceIdentifier {
-    export const registry = new ServiceRegistry(of, ServiceIdentityTag);
+    export const registry = new ServiceRegistry(of);
     /**
      * Returns a new service identifier for a specific type
      *
      * This method will strongly bind implementation to a specific type
      */
     export function of<T = any>(ctor: Constructor<T>): ServiceIdentifier<T> {
-        return create(ctor, { name: ctor.name });
+        return create(ctor, { name: ctor.name, namespace: "default" });
     }
 
     /** Check wether or not the provided object is a ServiceIdentifier */
@@ -58,14 +68,19 @@ function create<T>(tag: string | symbol | Constructor, options: ServiceIdentifie
 
     serviceIdentityTag.set(id, tag);
 
-    Object.assign(id, createImpl(id, options));
+    Object.assign(id, createImpl(options));
     ServiceIdentifier.registry.add(id, options);
 
     return id;
 }
 
-function createImpl<T>(id: ServiceIdentifier, options: ServiceIdentifierOptions): ServiceIdentifierImpl<T> {
+function createImpl<T>(options: ServiceIdentifierOptions): ServiceIdentifierImpl<T> {
     return {
-        toString: () => options.name
+        [Symbol.toPrimitive]: () => getFullName(options),
+        toString: () => getFullName(options)
     };
+}
+
+function getFullName(options: ServiceIdentifierOptions): string {
+    return `${options.namespace}/${options.name}`;
 }
