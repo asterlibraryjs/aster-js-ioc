@@ -68,7 +68,7 @@ export abstract class IoCContainer extends DisposableHost implements IIoCModule 
         try {
             const asyncTasks = [];
 
-            this.logger?.debug("Starting IoC module with {setupCount} setups and {serviceCount}", setups.length, this.services.size);
+            this.logger?.debug("Starting IoC module with {setupCount} setup(s) and {serviceCount} service(s)", setups.length, this.services.size);
 
             for (; idx < setups.length; idx++) {
                 const setup = setups[idx];

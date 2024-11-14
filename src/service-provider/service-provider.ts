@@ -62,7 +62,7 @@ export class ServiceProvider implements IServiceProvider, IDisposable {
 
     private *resolveArgs(ctor: Constructor, baseArgs: readonly any[]): Iterable<any> {
         const dependencies = [...this._dependencyResolver.resolveDependencies(ctor)];
-        if (!dependencies.length) return baseArgs;
+        if (!dependencies.length) return yield* baseArgs;
 
         const [first] = dependencies;
         if (baseArgs.length !== first.param.index) {
