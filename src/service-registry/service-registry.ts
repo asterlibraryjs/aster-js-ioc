@@ -20,7 +20,22 @@ export class ServiceRegistry {
 
     *dependencies(ctor: Constructor): Iterable<DependencyParameter> {
         const deps = this._dependencies.get(ctor);
-        if (deps) yield* deps.sort((l, r) => l.index - r.index);
+        if (deps)  {
+            let nextIdx = -1;
+            for (const dep of deps.sort((l, r) => l.index - r.index)) {
+                if (nextIdx === -1) { // First service
+                    nextIdx = dep.index;
+                }
+                else if(nextIdx !== dep.index) {
+                    throw new Error(
+                        `Invalid parameter order in constructor of ${ctor.name} at index ${dep.index}.` +
+                        `Dynamic parameters must be first in the constructor.`
+                    );
+                }
+                yield dep;
+                nextIdx++;
+            }
+        }
     }
 
     get(tag: string | symbol | Constructor): ServiceIdentifier | null {
