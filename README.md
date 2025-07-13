@@ -4,7 +4,7 @@
 
 This project provides a standalone dependency injection / inversion of control library.
 
-A more SPA service architecture / ecosystem is built through `@aster-js/app`.
+A more SPA service architecture / ecosystem is built through [@aster-js/app](https://github.com/asterlibraryjs/aster-js-app).
 
 It's compatible with any renderer and enable to structure your code using SOA architecture offering then decoupling, abstration, easy to unit test and modulary to your project.
 
@@ -12,7 +12,7 @@ Let see how difficult it is...
 
 ### Create your first services
 
-First of all, its recommanded to declare explicitly the service id and implementation:
+First of all, it's recommended to declare explicitly the service id and implementation:
 
 #### Step 1: Declaring the service identifier and its contract:
 
@@ -40,13 +40,13 @@ export class HttpService implements IHttpService {
 }
 ```
 
-The `ServiceContract` decorator is optional, but it will be usefull later to reduce the binding declaration enabling auto discovery of the link between the  implementation and its service id.
+The `ServiceContract` decorator is optional, but it will be useful later to reduce the binding declaration enabling auto discovery of the link between the  implementation and its service id.
 
 Explicit `implements` declaration can be removed when using the `@ServiceContract` decorator that already validate by itself the decorated class implements properly the service id interface.
 
 ### Step 3: Create your a service without service id
 
-As its not mandatory, only recommanded, no service id is necessary to register something in the IoC.
+As its not mandatory, only recommended, no service id is necessary to register something in the IoC.
 
 `@ServiceContract` will be then unexpected.
 
@@ -111,11 +111,11 @@ constructor(@Optional(IHttpService) httpService: IHttpService | undefined) { }
 #### Many: Inject all accessible instances
 Requires a service identfier and as many service registration you need... 0 will inject an empty and 3 will inject the 3 instances.
 ```ts
-constructor(@Many(IHandler) handlers: IHandler[]) { }
+constructor(@Many(IHandler) handlers: IHandler[]) { } 
 ```
 
 #### Options: Merge all accessible instances into 1
-Requires a service identfier that will describe options required by other services.
+Requires a service identifier that will describe options required by other services.
 This pattern will allow user of your services to customize options related to their usage.
 At the end, the service that consume options will get a single instance where all individual instances are merge into.
 ```ts
@@ -126,13 +126,16 @@ export type HttpOptions = {
     readonly defaultHeaders: Record<string, string>;
 }
 
-export HttpClient {
+export class HttpClient {
     constructor(@Options(HttpOptions) private readonly _options: HttpOptions) { }
+}
 
 // Default options can be injected through a default function
 // provided by the lib with other required services
 function addHttpClient(builder: IIoCModuleBuilder) {
-    return builder.configure(services =>{
+    return builder.configure(services => {
+        services.addSingleton(HttpClient);
+        // Add default options
         services.addInstance(HttpOptions, {
             baseAddress: location.origin + "/api",
             defaultHeaders:{},
@@ -143,16 +146,19 @@ function addHttpClient(builder: IIoCModuleBuilder) {
 }
 
 // Using the lib, you can should which property to override
-addHttpClient(builder)
-    .configure(services =>{
-        services.addInstance(HttpOptions, {
-            baseAddress: "https://myapi.myorg.org",
-            authenticate: true
-        });
+const builder = IoCKernel.create();
+addHttpClient(builder);
+builder.configure(services =>{
+    services.addInstance(HttpOptions, {
+        baseAddress: "https://myapi.myorg.org",
+        authenticate: true
     });
+});
 ```
 
 
 ## See Also
+- [Service declarations](./doc/injection-methods.md)
+- [Service Identifier](./doc/service-identifier.md)
 - [Service Factory](./doc/factory.md)
 - [Service Provider](./doc/provider.md)

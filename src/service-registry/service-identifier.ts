@@ -11,7 +11,7 @@ export interface ServiceIdentifierOptions {
     /** The name of the service */
     readonly name: string;
     /**
-     * Indicate whether or not this identity name should be unique or not.
+     * Indicate whether this identity name should be unique or not.
      *
      * If false, a Symbol is used as key, but symbols can't be shared/resolved between different bundle / modules.
      *

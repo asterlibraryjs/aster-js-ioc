@@ -12,5 +12,5 @@ export interface IInstantiationService {
 
     readonly onDidServiceInstantiated: IEvent<[desc: IServiceDescriptor, instance: any]>;
     createService(desc: IServiceDescriptor): any;
-    instanciateService(entry: ServiceEntry, ctx: InstantiationContext): void
+    instantiateService(entry: ServiceEntry, ctx: InstantiationContext): void
 }

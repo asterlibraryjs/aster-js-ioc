@@ -1,8 +1,8 @@
-import { IDisposable, Lazy, asserts, Constructor, Tag } from "@aster-js/core";
+import { IDisposable, Lazy, asserts, Constructor } from "@aster-js/core";
 import { EventEmitter, IEvent } from "@aster-js/events";
 
-import { IServiceFactory, ServiceContract, ServiceIdentifier } from "../service-registry";
-import { IServiceDescriptor, ServiceDescriptor, ServiceFactoryDescriptor } from "../service-descriptors";
+import { IServiceFactory, ServiceContract } from "../service-registry";
+import { IServiceDescriptor, ServiceFactoryDescriptor } from "../service-descriptors";
 
 import { IDependencyResolver } from "./idependency-resolver";
 import { IInstantiationService } from "./iinstantiation-service";
@@ -45,7 +45,7 @@ export class InstantiationService implements IInstantiationService {
         return proxy;
     }
 
-    instanciateService(entry: ServiceEntry, ctx: InstantiationContext): void {
+    instantiateService(entry: ServiceEntry, ctx: InstantiationContext): void {
         const instance = entry.desc.delayed && ctx.target.uid !== entry.uid
             ? this.createDelayedService(entry)
             : this.createServiceInstance(entry, ctx);
@@ -80,7 +80,7 @@ export class InstantiationService implements IInstantiationService {
 
     private instanciateDependency(entry: ServiceEntry, ctx: InstantiationContext): void {
         const instantiationSvc = entry.provider.get(IInstantiationService, true);
-        instantiationSvc.instanciateService(entry, ctx);
+        instantiationSvc.instantiateService(entry, ctx);
     }
 
     private createServiceInstance(entry: ServiceEntry, ctx: InstantiationContext): any {
