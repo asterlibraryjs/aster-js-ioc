@@ -1,6 +1,15 @@
 import { assert } from "chai";
-import { assert as sassert, spy } from "sinon";
-import { IServiceProvider, Optional, IoCKernel, IServiceFactory, Inject, Many, SetupErrorHandlerResult, ServiceScope } from "../src";
+import {
+    IServiceProvider,
+    Optional,
+    IoCKernel,
+    IServiceFactory,
+    Inject,
+    Many,
+    SetupErrorHandlerResult,
+    ServiceScope,
+    ServiceIdentifier
+} from "../src";
 import { HttpClient, ICustomerService, NoContractCustomerService, NoDependencyCustomerService } from "./service.mocks";
 import { assertIdentity } from "./identity-assertions";
 
@@ -46,6 +55,22 @@ describe("Dependency Injection without Graph", () => {
 
         class Bob {
             constructor(@ICustomerService readonly svc?: any) { }
+        }
+
+        const result = services.createInstance(Bob);
+
+        assert.isDefined(result.svc);
+        assert.instanceOf(result.svc, NoContractCustomerService);
+    });
+
+    it("Should inject properly service from ServiceIdentifier.of", () => {
+        const serviceId = ServiceIdentifier.of(NoContractCustomerService);
+        const { services } = IoCKernel.create()
+            .configure(services => services.addSingleton(serviceId, NoContractCustomerService))
+            .build();
+
+        class Bob {
+            constructor(@serviceId readonly svc?: any) { }
         }
 
         const result = services.createInstance(Bob);
@@ -206,7 +231,10 @@ describe("Dependency Injection without Graph", () => {
         const kernel = IoCKernel.create()
             .configure(services => services.addSingleton(NoDependencyCustomerService))
             .setup(ICustomerService, _ => { throw expected; })
-            .catch(err => (catchedError = err, SetupErrorHandlerResult.stop))
+            .catch(err => {
+                catchedError = err;
+                return SetupErrorHandlerResult.stop;
+            })
             .setup(ICustomerService, _ => hasContinuedSetup = true)
             .build();
 
@@ -251,7 +279,7 @@ describe("Dependency Injection without Graph", () => {
             .build();
 
         class Bob {
-            constructor(index: number, @ICustomerService readonly svc?: any) { }
+            constructor(readonly index: number, @ICustomerService readonly svc?: any) { }
         }
 
         assert.throw(() => services.createInstance(Bob), /(expected 1 arguments)/);
@@ -263,7 +291,7 @@ describe("Dependency Injection without Graph", () => {
             .build();
 
         class Bob {
-            constructor(index: number, @ICustomerService readonly svc?: any) { }
+            constructor(readonly index: number, @ICustomerService readonly svc?: any) { }
         }
 
         assert.throw(() => services.createInstance(Bob, 0, 2), /(expected 1 arguments)/);
